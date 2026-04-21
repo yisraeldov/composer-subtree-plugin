@@ -8,8 +8,7 @@ use Composer\Composer;
 use Composer\Command\BaseCommand;
 use Composer\Console\Application;
 use ComposerSubtreePlugin\Config\SubtreeConfig;
-use ComposerSubtreePlugin\Config\SubtreeConfigLoader;
-use ComposerSubtreePlugin\Config\SubtreeTargetResolver;
+use ComposerSubtreePlugin\Config\SubtreeTargetConfigProvider;
 use ComposerSubtreePlugin\Git\GitProcessRunner;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,6 +19,7 @@ final class SubtreePushCommand extends BaseCommand
     public function __construct(
         Composer $composer,
         private readonly GitProcessRunner $gitRunner,
+        private readonly ?SubtreeTargetConfigProvider $targetConfigProvider = null,
     ) {
         parent::__construct('subtree:push');
         $this->setComposer($composer);
@@ -64,15 +64,19 @@ final class SubtreePushCommand extends BaseCommand
      */
     private function resolveTargetConfigs(InputInterface $input): array
     {
-        $target = $input->getArgument('target');
-        if (!is_string($target)) {
-            $target = null;
+        return $this->targetConfigProvider()->resolve(
+            $this->requireComposer()->getPackage(),
+            $input->getArgument('target'),
+        );
+    }
+
+    private function targetConfigProvider(): SubtreeTargetConfigProvider
+    {
+        if ($this->targetConfigProvider instanceof SubtreeTargetConfigProvider) {
+            return $this->targetConfigProvider;
         }
 
-        $loader = new SubtreeConfigLoader();
-        $configs = $loader->load($this->requireComposer()->getPackage());
-
-        return (new SubtreeTargetResolver())->resolve($target, $configs);
+        return new SubtreeTargetConfigProvider();
     }
 
     private function buildPushCommand(SubtreeConfig $subtreeConfig): string
