@@ -19,6 +19,7 @@ final class SubtreeCommandProvider implements CommandProvider
         return [
             new SubtreeAddCommand($this->composer, new GitProcessRunner()),
             new SubtreePullCommand($this->composer, new GitProcessRunner()),
+            new SubtreePushCommand($this->composer, new GitProcessRunner()),
         ];
     }
 }
