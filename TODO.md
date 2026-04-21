@@ -20,9 +20,9 @@ Legend:
 - [x] DoD: commands can resolve configured subtrees from config.
 
 ### Slice 3 - Git execution baseline
-- [ ] Implement `GitProcessRunner` for command execution + exit code capture.
-- [ ] Implement uniform exception with command/stderr context.
-- [ ] DoD: all git calls use one runner with consistent failures.
+- [x] Implement `GitProcessRunner` for command execution + exit code capture.
+- [x] Implement uniform exception with command/stderr context.
+- [x] DoD: all git calls use one runner with consistent failures.
 
 ### Slice 4 - `composer subtree:add` (MVP)
 - [ ] Add command: `composer subtree:add <upstream-url> <upstream-branch> [prefix] [--squash]`.

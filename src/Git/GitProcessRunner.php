@@ -4,60 +4,46 @@ declare(strict_types=1);
 
 namespace ComposerSubtreePlugin\Git;
 
+use Symfony\Component\Process\Process;
+
 final class GitProcessRunner
 {
     public function run(string $command): GitProcessResult
     {
-        $descriptorSpec = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ];
+        $process = Process::fromShellCommandline($command);
+        $process->run();
 
-        $process = proc_open(
-            $command,
-            $descriptorSpec,
-            $pipes,
-        );
-
-        if (!is_resource($process)) {
-            throw new GitProcessException(
-                'Failed to start process',
-                $command,
-                -1,
-            );
-        }
-
-        fclose($pipes[0]);
-
-        $stdout = stream_get_contents($pipes[1]);
-        fclose($pipes[1]);
-
-        $stderr = stream_get_contents($pipes[2]);
-        fclose($pipes[2]);
-
-        $exitCode = proc_close($process);
+        $exitCode = $process->getExitCode() ?? 0;
 
         return new GitProcessResult(
             $exitCode,
-            $stdout,
-            $stderr,
+            $process->getOutput(),
+            $process->getErrorOutput(),
         );
     }
 
     public function runOrFail(string $command): GitProcessResult
     {
-        $result = $this->run($command);
+        $process = Process::fromShellCommandline($command);
+        $process->run();
 
-        if (!$result->isSuccess()) {
+        if (!$process->isSuccessful()) {
+            $exitCode = $process->getExitCode() ?? 1;
+
             throw new GitProcessException(
                 'Git command failed',
                 $command,
-                $result->exitCode(),
-                $result->stderr(),
+                $exitCode,
+                $process->getErrorOutput(),
             );
         }
 
-        return $result;
+        $exitCode = $process->getExitCode() ?? 0;
+
+        return new GitProcessResult(
+            $exitCode,
+            $process->getOutput(),
+            $process->getErrorOutput(),
+        );
     }
 }
