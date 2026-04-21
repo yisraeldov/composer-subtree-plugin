@@ -7,10 +7,14 @@ Guidance for agentic coding assistants working in this repository.
 - MUST follow strict TDD: no production change without a failing test first.
 - MUST apply SOLID and Clean Code in every change.
 - MUST leave touched code cleaner than before (Boy Scout Rule).
+- MUST prefer proven existing libraries over custom implementations when they satisfy requirements.
+- MUST research official documentation and trusted references when blocked; always RTFM before guessing.
 - MUST run the narrowest relevant tests before expanding scope.
 - MUST keep `composer cs`, `composer phpstan`, and `composer test` green before finishing substantial work.
 - NEVER bypass failing checks by weakening tests or reducing static analysis strictness.
 - NEVER add dead code, speculative abstractions, or TODO-driven placeholders in production paths.
+- NEVER reinvent the wheel without a clear documented reason that existing libraries are unsuitable.
+- NEVER rely on memory alone for unclear behavior; check docs and, when needed, search the internet for authoritative guidance.
 - NEVER use unusual commit subject prefixes (no `feat:`, `fix:`, brackets, emojis, ticket noise).
 
 ## Mission
@@ -24,6 +28,7 @@ Guidance for agentic coding assistants working in this repository.
 - Keep functions and methods small, focused, and expressive.
 - Prefer explicitness over cleverness.
 - Eliminate duplication, but do not over-abstract too early.
+- Reuse well-maintained ecosystem packages when they fit; write custom code only for true gaps.
 - Optimize for easy change and safe refactoring.
 - Leave the code cleaner than you found it.
 
