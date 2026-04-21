@@ -23,6 +23,7 @@ final class SubtreeAddCommand extends BaseCommand
     public function __construct(
         Composer $composer,
         private readonly GitProcessRunner $gitRunner,
+        private readonly ?string $composerJsonPath = null,
     ) {
         parent::__construct('subtree:add');
         $this->setComposer($composer);
@@ -195,7 +196,7 @@ final class SubtreeAddCommand extends BaseCommand
 
     private function persistSubtreeConfig(SubtreeConfig $config): void
     {
-        $jsonFile = new JsonFile(Factory::getComposerFile());
+        $jsonFile = new JsonFile($this->composerJsonPath ?? Factory::getComposerFile());
         $manifest = $jsonFile->read();
 
         if (!is_array($manifest)) {

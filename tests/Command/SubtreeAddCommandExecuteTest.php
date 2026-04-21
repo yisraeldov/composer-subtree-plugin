@@ -14,32 +14,14 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 final class SubtreeAddCommandExecuteTest extends TestCase
 {
-    private string $originalCwd;
-
-    protected function setUp(): void
-    {
-        $cwd = getcwd();
-
-        self::assertNotFalse($cwd);
-
-        $this->originalCwd = $cwd;
-    }
-
-    protected function tearDown(): void
-    {
-        chdir($this->originalCwd);
-    }
-
     public function testItDefaultsPrefixToPackagesRepoName(): void
     {
-        $composer = $this->createComposerWithEmptySubtrees();
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
             ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre.git main')
             ->willReturn(new GitProcessResult(0, '', ''));
 
-        $command = new SubtreeAddCommand($composer, $gitRunner);
-        $tester = new CommandTester($command);
+        [$tester] = $this->createIsolatedCommandTester($gitRunner);
 
         $tester->execute([
             'upstream-url' => 'https://github.com/composer/pcre.git',
@@ -53,14 +35,12 @@ final class SubtreeAddCommandExecuteTest extends TestCase
 
     public function testItDefaultsSquashToFalse(): void
     {
-        $composer = $this->createComposerWithEmptySubtrees();
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
             ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre.git main')
             ->willReturn(new GitProcessResult(0, '', ''));
 
-        $command = new SubtreeAddCommand($composer, $gitRunner);
-        $tester = new CommandTester($command);
+        [$tester] = $this->createIsolatedCommandTester($gitRunner);
 
         $tester->execute([
             'upstream-url' => 'https://github.com/composer/pcre.git',
@@ -72,14 +52,12 @@ final class SubtreeAddCommandExecuteTest extends TestCase
 
     public function testItUsesSquashFlagWhenOptionProvided(): void
     {
-        $composer = $this->createComposerWithEmptySubtrees();
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
             ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre.git main --squash')
             ->willReturn(new GitProcessResult(0, '', ''));
 
-        $command = new SubtreeAddCommand($composer, $gitRunner);
-        $tester = new CommandTester($command);
+        [$tester] = $this->createIsolatedCommandTester($gitRunner);
 
         $tester->execute([
             'upstream-url' => 'https://github.com/composer/pcre.git',
@@ -94,28 +72,21 @@ final class SubtreeAddCommandExecuteTest extends TestCase
 
     public function testItPersistsSubtreeConfigToComposerJson(): void
     {
-        $tempDir = $this->createTempDirectory();
-        chdir($tempDir);
-
-        file_put_contents(
-            $tempDir . '/composer.json',
-            json_encode(['name' => 'acme/app', 'extra' => ['subtrees' => []]], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
-        );
-
-        $composer = $this->createComposerWithEmptySubtrees();
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
             ->willReturn(new GitProcessResult(0, '', ''));
 
-        $command = new SubtreeAddCommand($composer, $gitRunner);
-        $tester = new CommandTester($command);
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            ['name' => 'acme/app', 'extra' => ['subtrees' => []]],
+        );
 
         $tester->execute([
             'upstream-url' => 'https://github.com/composer/pcre.git',
             'upstream-branch' => 'main',
         ]);
 
-        $composerManifest = $this->readComposerManifest($tempDir . '/composer.json');
+        $composerManifest = $this->readComposerManifest($composerJsonPath);
 
         self::assertSame(
             [
@@ -131,21 +102,14 @@ final class SubtreeAddCommandExecuteTest extends TestCase
 
     public function testItPersistsSquashFlagWhenProvided(): void
     {
-        $tempDir = $this->createTempDirectory();
-        chdir($tempDir);
-
-        file_put_contents(
-            $tempDir . '/composer.json',
-            json_encode(['name' => 'acme/app'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
-        );
-
-        $composer = $this->createComposerWithEmptySubtrees();
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
             ->willReturn(new GitProcessResult(0, '', ''));
 
-        $command = new SubtreeAddCommand($composer, $gitRunner);
-        $tester = new CommandTester($command);
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            ['name' => 'acme/app'],
+        );
 
         $tester->execute([
             'upstream-url' => 'https://github.com/composer/pcre.git',
@@ -153,7 +117,7 @@ final class SubtreeAddCommandExecuteTest extends TestCase
             '--squash' => true,
         ]);
 
-        $composerManifest = $this->readComposerManifest($tempDir . '/composer.json');
+        $composerManifest = $this->readComposerManifest($composerJsonPath);
         $subtree = $this->readSubtreeEntry($composerManifest, 'composer/pcre');
 
         self::assertTrue(
@@ -163,20 +127,13 @@ final class SubtreeAddCommandExecuteTest extends TestCase
 
     public function testItRejectsSubtreeKeyContainingDot(): void
     {
-        $tempDir = $this->createTempDirectory();
-        chdir($tempDir);
-
-        file_put_contents(
-            $tempDir . '/composer.json',
-            json_encode(['name' => 'acme/app'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
-        );
-
-        $composer = $this->createComposerWithEmptySubtrees();
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::never())->method('runOrFail');
 
-        $command = new SubtreeAddCommand($composer, $gitRunner);
-        $tester = new CommandTester($command);
+        [$tester] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            ['name' => 'acme/app'],
+        );
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('cannot contain dots');
@@ -185,6 +142,131 @@ final class SubtreeAddCommandExecuteTest extends TestCase
             'upstream-url' => 'https://github.com/composer/p.cre.git',
             'upstream-branch' => 'main',
         ]);
+    }
+
+    public function testItCanPersistToInjectedComposerJsonPath(): void
+    {
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->willReturn(new GitProcessResult(0, '', ''));
+
+        [$tester, $tempComposerJson] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            ['name' => 'acme/app'],
+        );
+
+        $tester->execute([
+            'upstream-url' => 'https://github.com/composer/pcre.git',
+            'upstream-branch' => 'main',
+        ]);
+
+        $composerManifest = $this->readComposerManifest($tempComposerJson);
+
+        self::assertSame(
+            [
+                'package' => 'composer/pcre',
+                'prefix' => 'packages/pcre',
+                'remote' => 'https://github.com/composer/pcre.git',
+                'branch' => 'main',
+                'squash' => false,
+            ],
+            $this->readSubtreeEntry($composerManifest, 'composer/pcre'),
+        );
+    }
+
+    public function testItPreservesExistingSubtreesWhenAddingAnother(): void
+    {
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre.git main')
+            ->willReturn(new GitProcessResult(0, '', ''));
+
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            [
+                'name' => 'acme/app',
+                'extra' => [
+                    'subtrees' => [
+                        'psr/log' => [
+                            'package' => 'psr/log',
+                            'prefix' => 'packages/log',
+                            'remote' => 'https://github.com/php-fig/log.git',
+                            'branch' => 'master',
+                            'squash' => true,
+                        ],
+                    ],
+                ],
+            ],
+        );
+
+        $tester->execute([
+            'upstream-url' => 'https://github.com/composer/pcre.git',
+            'upstream-branch' => 'main',
+        ]);
+
+        $composerManifest = $this->readComposerManifest($composerJsonPath);
+        $subtrees = $this->readSubtrees($composerManifest);
+
+        self::assertArrayHasKey('psr/log', $subtrees);
+        self::assertArrayHasKey('composer/pcre', $subtrees);
+        self::assertSame('packages/log', $subtrees['psr/log']['prefix'] ?? null);
+        self::assertSame('packages/pcre', $subtrees['composer/pcre']['prefix'] ?? null);
+    }
+
+    public function testItDerivesPackageAndPrefixWhenUrlHasNoGitSuffix(): void
+    {
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre main')
+            ->willReturn(new GitProcessResult(0, '', ''));
+
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+        );
+
+        $tester->execute([
+            'upstream-url' => 'https://github.com/composer/pcre',
+            'upstream-branch' => 'main',
+        ]);
+
+        $composerManifest = $this->readComposerManifest($composerJsonPath);
+
+        self::assertSame(
+            [
+                'package' => 'composer/pcre',
+                'prefix' => 'packages/pcre',
+                'remote' => 'https://github.com/composer/pcre',
+                'branch' => 'main',
+                'squash' => false,
+            ],
+            $this->readSubtreeEntry($composerManifest, 'composer/pcre'),
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     *
+     * @return array{0: CommandTester, 1: string}
+     */
+    private function createIsolatedCommandTester(
+        GitProcessRunner $gitRunner,
+        array $manifest = ['name' => 'acme/app'],
+    ): array {
+        $tempDir = $this->createTempDirectory();
+        $composerJsonPath = $tempDir . '/composer.json';
+        $encoded = json_encode(
+            $manifest,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+        );
+
+        self::assertIsString($encoded);
+
+        file_put_contents($composerJsonPath, $encoded . "\n");
+
+        $composer = $this->createComposerWithEmptySubtrees();
+        $command = new SubtreeAddCommand($composer, $gitRunner, $composerJsonPath);
+
+        return [new CommandTester($command), $composerJsonPath];
     }
 
     /**
@@ -220,11 +302,7 @@ final class SubtreeAddCommandExecuteTest extends TestCase
      */
     private function readSubtreeEntry(array $manifest, string $key): array
     {
-        $extra = $manifest['extra'] ?? null;
-        self::assertIsArray($extra);
-
-        $subtrees = $extra['subtrees'] ?? null;
-        self::assertIsArray($subtrees);
+        $subtrees = $this->readSubtrees($manifest);
 
         $entry = $subtrees[$key] ?? null;
         self::assertIsArray($entry);
@@ -232,11 +310,43 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         $normalized = [];
 
         foreach ($entry as $entryKey => $entryValue) {
-            if (!is_string($entryKey)) {
+            $normalized[$entryKey] = $entryValue;
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function readSubtrees(array $manifest): array
+    {
+        $extra = $manifest['extra'] ?? null;
+        self::assertIsArray($extra);
+
+        $subtrees = $extra['subtrees'] ?? null;
+        self::assertIsArray($subtrees);
+
+        $normalized = [];
+
+        foreach ($subtrees as $subtreeKey => $subtreeValue) {
+            if (!is_string($subtreeKey) || !is_array($subtreeValue)) {
                 continue;
             }
 
-            $normalized[$entryKey] = $entryValue;
+            $entry = [];
+
+            foreach ($subtreeValue as $entryKey => $entryValue) {
+                if (!is_string($entryKey)) {
+                    continue;
+                }
+
+                $entry[$entryKey] = $entryValue;
+            }
+
+            $normalized[$subtreeKey] = $entry;
         }
 
         return $normalized;
