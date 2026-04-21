@@ -16,7 +16,9 @@ final class SubtreeCommandProviderTest extends TestCase
     public function testItProvidesSubtreeAddPullAndPushCommands(): void
     {
         $composer = $this->createMock(Composer::class);
-        $provider = new SubtreeCommandProvider($composer);
+        $provider = new SubtreeCommandProvider([
+            'composer' => $composer,
+        ]);
 
         $commands = $provider->getCommands();
 
@@ -24,5 +26,15 @@ final class SubtreeCommandProviderTest extends TestCase
         self::assertInstanceOf(SubtreeAddCommand::class, $commands[0]);
         self::assertInstanceOf(SubtreePullCommand::class, $commands[1]);
         self::assertInstanceOf(SubtreePushCommand::class, $commands[2]);
+    }
+
+    public function testItRejectsMissingComposerCapabilityArgument(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Command provider requires a Composer instance in capability args.',
+        );
+
+        new SubtreeCommandProvider([]);
     }
 }

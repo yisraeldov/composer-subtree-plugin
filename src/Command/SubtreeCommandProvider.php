@@ -10,9 +10,24 @@ use ComposerSubtreePlugin\Git\GitProcessRunner;
 
 final class SubtreeCommandProvider implements CommandProvider
 {
+    private readonly Composer $composer;
+
+    /**
+     * @param array<string, mixed> $capabilityArgs
+     */
     public function __construct(
-        private readonly Composer $composer,
-    ) {}
+        array $capabilityArgs,
+    ) {
+        $composer = $capabilityArgs['composer'] ?? null;
+
+        if (!$composer instanceof Composer) {
+            throw new \InvalidArgumentException(
+                'Command provider requires a Composer instance in capability args.',
+            );
+        }
+
+        $this->composer = $composer;
+    }
 
     public function getCommands(): array
     {
