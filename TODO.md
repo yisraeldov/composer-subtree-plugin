@@ -14,10 +14,10 @@ Legend:
 - [x] DoD: plugin installs and activates without errors.
 
 ### Slice 2 - Minimal subtree config loader (happy path)
-- [ ] Read `extra.subtrees` from root `composer.json`.
-- [ ] Map entries to minimal runtime config (`name`, `package`, `prefix`, `remote`, `branch`, `squash`).
-- [ ] Default `squash=false` when omitted.
-- [ ] DoD: commands can resolve configured subtrees from config.
+- [x] Read `extra.subtrees` from root `composer.json`.
+- [x] Map entries to minimal runtime config (`name`, `package`, `prefix`, `remote`, `branch`, `squash`).
+- [x] Default `squash=false` when omitted.
+- [x] DoD: commands can resolve configured subtrees from config.
 
 ### Slice 3 - Git execution baseline
 - [ ] Implement `GitProcessRunner` for command execution + exit code capture.
