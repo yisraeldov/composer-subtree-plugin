@@ -27,6 +27,7 @@ Guidance for agentic coding assistants working in this repository.
 
 - Keep functions and methods small, focused, and expressive.
 - Prefer explicitness over cleverness.
+- Prefer a functional style for collection transformations (`array_map`, `array_filter`, `array_reduce`) over `for`/`foreach` loops.
 - Eliminate duplication, but do not over-abstract too early.
 - Reuse well-maintained ecosystem packages when they fit; write custom code only for true gaps.
 - Optimize for easy change and safe refactoring.
@@ -158,10 +159,12 @@ Rules for using external repos in tests:
 
 - Type all parameters, return values, and properties.
 - Avoid `mixed` unless unavoidable and documented by context.
+- Do not add redundant runtime type checks for already-typed internal inputs; trust PHP type declarations and static analysis.
+- Add validation at boundaries (user input, filesystem, network, process output), not inside strongly-typed internal flows.
 - Prefer value objects and small abstractions over primitive obsession when behavior grows.
 - Keep static analysis (`phpstan` level max + strict rules) clean.
 - Use parameter promotion in constructor instead of creating
-  memembers.
+  members.
   
 ### Naming
 
