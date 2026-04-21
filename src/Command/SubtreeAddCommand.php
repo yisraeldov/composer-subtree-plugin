@@ -9,6 +9,7 @@ use Composer\Command\BaseCommand;
 use Composer\Console\Application;
 use Composer\Factory;
 use Composer\Json\JsonFile;
+use ComposerSubtreePlugin\Config\RepositoriesConfigUpdater;
 use ComposerSubtreePlugin\Config\SubtreeConfig;
 use ComposerSubtreePlugin\Git\GitProcessRunner;
 use ComposerSubtreePlugin\Git\SubtreeGitCommandBuilder;
@@ -107,60 +108,36 @@ final class SubtreeAddCommand extends BaseCommand
         $extra = $this->normalizeMap($manifest['extra'] ?? []);
         $subtrees = $this->normalizeMap($extra['subtrees'] ?? []);
 
-        $subtrees[$config->name()] = [
+        $subtrees[$config->name()] = $this->createSubtreeConfigEntry($config);
+
+        $extra['subtrees'] = $subtrees;
+        $manifest['extra'] = $extra;
+        $manifest['repositories'] = $this->repositoriesConfigUpdater()
+            ->ensurePathRepository(
+                $manifest['repositories'] ?? [],
+                $config->prefix(),
+            );
+
+        $jsonFile->write($manifest);
+    }
+
+    /**
+     * @return array<string, string|bool>
+     */
+    private function createSubtreeConfigEntry(SubtreeConfig $config): array
+    {
+        return [
             'package' => $config->package(),
             'prefix' => $config->prefix(),
             'remote' => $config->remote(),
             'branch' => $config->branch(),
             'squash' => $config->squash(),
         ];
-
-        $extra['subtrees'] = $subtrees;
-        $manifest['extra'] = $extra;
-        $manifest['repositories'] = $this->ensurePathRepository(
-            $manifest['repositories'] ?? [],
-            $config->prefix(),
-        );
-
-        $jsonFile->write($manifest);
     }
 
-    /**
-     * @param mixed $repositories
-     *
-     * @return array<mixed>
-     */
-    private function ensurePathRepository(mixed $repositories, string $prefix): array
+    private function repositoriesConfigUpdater(): RepositoriesConfigUpdater
     {
-        if (!is_array($repositories)) {
-            return [['type' => 'path', 'url' => $prefix]];
-        }
-
-        if ($this->hasPathRepositoryForPrefix($repositories, $prefix)) {
-            return $repositories;
-        }
-
-        $repositories[] = ['type' => 'path', 'url' => $prefix];
-
-        return $repositories;
-    }
-
-    /**
-     * @param array<mixed> $repositories
-     */
-    private function hasPathRepositoryForPrefix(array $repositories, string $prefix): bool
-    {
-        return array_reduce(
-            $repositories,
-            static fn(bool $hasRepository, mixed $repository): bool
-                => $hasRepository
-                    || (
-                        is_array($repository)
-                        && ($repository['type'] ?? null) === 'path'
-                        && ($repository['url'] ?? null) === $prefix
-                    ),
-            false,
-        );
+        return new RepositoriesConfigUpdater();
     }
 
     private function resolveComposerJsonPath(): string

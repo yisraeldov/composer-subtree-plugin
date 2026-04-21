@@ -20,7 +20,8 @@ final class SubtreePushCommand extends BaseCommand
     public function __construct(
         Composer $composer,
         private readonly GitProcessRunner $gitRunner,
-        private readonly ?SubtreeTargetConfigProvider $targetConfigProvider = null,
+        private readonly ?SubtreeTargetConfigProvider
+            $targetConfigProvider = null,
         private readonly ?SubtreeGitCommandBuilder $commandBuilder = null,
     ) {
         parent::__construct('subtree:push');
@@ -74,7 +75,10 @@ final class SubtreePushCommand extends BaseCommand
 
     private function targetConfigProvider(): SubtreeTargetConfigProvider
     {
-        if ($this->targetConfigProvider instanceof SubtreeTargetConfigProvider) {
+        if (
+            $this->targetConfigProvider
+            instanceof SubtreeTargetConfigProvider
+        ) {
             return $this->targetConfigProvider;
         }
 

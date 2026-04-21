@@ -23,7 +23,8 @@ final class SubtreeGitCommandBuilderTest extends TestCase
         $builder = new SubtreeGitCommandBuilder();
 
         self::assertSame(
-            "git fetch 'https://github.com/composer/pcre.git' 'main;echo hacked'",
+            "git fetch 'https://github.com/composer/pcre.git' "
+            . "'main;echo hacked'",
             $builder->fetch($config),
         );
     }
@@ -42,7 +43,8 @@ final class SubtreeGitCommandBuilderTest extends TestCase
         $builder = new SubtreeGitCommandBuilder();
 
         self::assertSame(
-            "git subtree pull --prefix='packages/log;echo hacked' 'https://github.com/php-fig/log.git' 'master' --squash",
+            "git subtree pull --prefix='packages/log;echo hacked' "
+            . "'https://github.com/php-fig/log.git' 'master' --squash",
             $builder->pull($config),
         );
     }
@@ -60,7 +62,8 @@ final class SubtreeGitCommandBuilderTest extends TestCase
         $builder = new SubtreeGitCommandBuilder();
 
         self::assertSame(
-            "git subtree push --prefix='packages/zeta' 'ssh:example/zeta' 'main'",
+            "git subtree push --prefix='packages/zeta' "
+            . "'ssh:example/zeta' 'main'",
             $builder->push($config),
         );
     }

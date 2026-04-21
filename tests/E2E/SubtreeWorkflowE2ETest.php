@@ -59,7 +59,10 @@ final class SubtreeWorkflowE2ETest extends TestCase
             $composerJsonPath = $consumerPath . '/composer.json';
 
             $this->initializeRemoteWithSeedCommit($remotePath, $seedPath);
-            $this->initializeConsumerRepository($consumerPath, $composerJsonPath);
+            $this->initializeConsumerRepository(
+                $consumerPath,
+                $composerJsonPath,
+            );
 
             $addStatus = $this->runInDirectory(
                 $consumerPath,
@@ -81,13 +84,19 @@ final class SubtreeWorkflowE2ETest extends TestCase
             );
 
             self::assertSame(Command::SUCCESS, $addStatus);
-            self::assertFileExists($consumerPath . '/packages/library/upstream.txt');
+            self::assertFileExists(
+                $consumerPath . '/packages/library/upstream.txt',
+            );
             self::assertSame(
                 "v1\n",
-                file_get_contents($consumerPath . '/packages/library/upstream.txt'),
+                file_get_contents(
+                    $consumerPath . '/packages/library/upstream.txt',
+                ),
             );
 
-            $subtrees = $this->readSubtreesFromComposerManifest($composerJsonPath);
+            $subtrees = $this->readSubtreesFromComposerManifest(
+                $composerJsonPath,
+            );
             self::assertCount(1, $subtrees);
             self::assertContains(
                 ['type' => 'path', 'url' => 'packages/library'],
@@ -119,7 +128,9 @@ final class SubtreeWorkflowE2ETest extends TestCase
             self::assertSame(Command::SUCCESS, $pullStatus);
             self::assertSame(
                 "v2\n",
-                file_get_contents($consumerPath . '/packages/library/upstream.txt'),
+                file_get_contents(
+                    $consumerPath . '/packages/library/upstream.txt',
+                ),
             );
 
             file_put_contents(
@@ -152,7 +163,11 @@ final class SubtreeWorkflowE2ETest extends TestCase
             self::assertSame(Command::SUCCESS, $pushStatus);
 
             $this->runGitCommand(
-                sprintf('git clone %s %s', escapeshellarg($remotePath), escapeshellarg($verifyPath)),
+                sprintf(
+                    'git clone %s %s',
+                    escapeshellarg($remotePath),
+                    escapeshellarg($verifyPath),
+                ),
                 $sandbox,
             );
 
@@ -169,7 +184,9 @@ final class SubtreeWorkflowE2ETest extends TestCase
     public function testGitHubSmokeAddAndPullWhenEnabled(): void
     {
         if (getenv('SUBTREE_GITHUB_SMOKE') !== '1') {
-            self::markTestSkipped('Set SUBTREE_GITHUB_SMOKE=1 to run GitHub smoke test.');
+            self::markTestSkipped(
+                'Set SUBTREE_GITHUB_SMOKE=1 to run GitHub smoke test.',
+            );
         }
 
         if (!$this->isGitSubtreeAvailable()) {
@@ -190,7 +207,10 @@ final class SubtreeWorkflowE2ETest extends TestCase
                 ? $branch
                 : 'main';
 
-            $this->initializeConsumerRepository($consumerPath, $composerJsonPath);
+            $this->initializeConsumerRepository(
+                $consumerPath,
+                $composerJsonPath,
+            );
 
             $addStatus = $this->runInDirectory(
                 $consumerPath,
@@ -216,9 +236,13 @@ final class SubtreeWorkflowE2ETest extends TestCase
             );
 
             self::assertSame(Command::SUCCESS, $addStatus);
-            self::assertFileExists($consumerPath . '/packages/pcre/composer.json');
+            self::assertFileExists(
+                $consumerPath . '/packages/pcre/composer.json',
+            );
 
-            $subtrees = $this->readSubtreesFromComposerManifest($composerJsonPath);
+            $subtrees = $this->readSubtreesFromComposerManifest(
+                $composerJsonPath,
+            );
 
             $pullStatus = $this->runInDirectory(
                 $consumerPath,
@@ -244,12 +268,15 @@ final class SubtreeWorkflowE2ETest extends TestCase
     {
         if (getenv('SUBTREE_GITHUB_PUSH_SMOKE') !== '1') {
             self::markTestSkipped(
-                'Set SUBTREE_GITHUB_PUSH_SMOKE=1 to run GitHub push smoke test.',
+                'Set SUBTREE_GITHUB_PUSH_SMOKE=1 '
+                . 'to run GitHub push smoke test.',
             );
         }
 
         if (!$this->isGitSubtreeAvailable()) {
-            self::markTestSkipped('git subtree is not available in PATH.');
+            self::markTestSkipped(
+                'git subtree is not available in PATH.',
+            );
         }
 
         $remote = getenv('SUBTREE_GITHUB_REMOTE');
@@ -274,7 +301,10 @@ final class SubtreeWorkflowE2ETest extends TestCase
             $verifyPath = $sandbox . '/verify';
             $composerJsonPath = $consumerPath . '/composer.json';
 
-            $this->initializeConsumerRepository($consumerPath, $composerJsonPath);
+            $this->initializeConsumerRepository(
+                $consumerPath,
+                $composerJsonPath,
+            );
 
             $addStatus = $this->runInDirectory(
                 $consumerPath,
@@ -297,7 +327,9 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
             self::assertSame(Command::SUCCESS, $addStatus);
 
-            $subtrees = $this->readSubtreesFromComposerManifest($composerJsonPath);
+            $subtrees = $this->readSubtreesFromComposerManifest(
+                $composerJsonPath,
+            );
             self::assertCount(1, $subtrees);
 
             $fileName = sprintf('smoke-%s.txt', bin2hex(random_bytes(5)));
@@ -335,7 +367,11 @@ final class SubtreeWorkflowE2ETest extends TestCase
             self::assertSame(Command::SUCCESS, $pushStatus);
 
             $this->runGitCommand(
-                sprintf('git clone %s %s', escapeshellarg($remote), escapeshellarg($verifyPath)),
+                sprintf(
+                    'git clone %s %s',
+                    escapeshellarg($remote),
+                    escapeshellarg($verifyPath),
+                ),
                 $sandbox,
             );
             $this->runGitCommand(
@@ -374,7 +410,10 @@ final class SubtreeWorkflowE2ETest extends TestCase
             $seedPath,
         );
         $this->runGitCommand('git push -u origin main', $seedPath);
-        $this->runGitCommand('git symbolic-ref HEAD refs/heads/main', $remotePath);
+        $this->runGitCommand(
+            'git symbolic-ref HEAD refs/heads/main',
+            $remotePath,
+        );
     }
 
     private function initializeConsumerRepository(
@@ -402,10 +441,16 @@ final class SubtreeWorkflowE2ETest extends TestCase
         $this->runGitCommand("git commit -m 'seed consumer'", $consumerPath);
     }
 
-    private function addUpstreamCommit(string $remotePath, string $maintainerPath): void
-    {
+    private function addUpstreamCommit(
+        string $remotePath,
+        string $maintainerPath,
+    ): void {
         $this->runGitCommand(
-            sprintf('git clone %s %s', escapeshellarg($remotePath), escapeshellarg($maintainerPath)),
+            sprintf(
+                'git clone %s %s',
+                escapeshellarg($remotePath),
+                escapeshellarg($maintainerPath),
+            ),
             dirname($maintainerPath),
         );
         $this->configureLocalGitIdentity($maintainerPath);
@@ -413,13 +458,19 @@ final class SubtreeWorkflowE2ETest extends TestCase
         file_put_contents($maintainerPath . '/upstream.txt', "v2\n");
 
         $this->runGitCommand('git add upstream.txt', $maintainerPath);
-        $this->runGitCommand("git commit -m 'update upstream'", $maintainerPath);
+        $this->runGitCommand(
+            "git commit -m 'update upstream'",
+            $maintainerPath,
+        );
         $this->runGitCommand('git push origin main', $maintainerPath);
     }
 
     private function configureLocalGitIdentity(string $repositoryPath): void
     {
-        $this->runGitCommand("git config user.name 'Subtree Test'", $repositoryPath);
+        $this->runGitCommand(
+            "git config user.name 'Subtree Test'",
+            $repositoryPath,
+        );
         $this->runGitCommand(
             "git config user.email 'subtree-test@example.com'",
             $repositoryPath,
@@ -444,8 +495,10 @@ final class SubtreeWorkflowE2ETest extends TestCase
         }
     }
 
-    private function runGitCommand(string $command, string $workingDirectory): void
-    {
+    private function runGitCommand(
+        string $command,
+        string $workingDirectory,
+    ): void {
         $process = Process::fromShellCommandline($command, $workingDirectory);
         $process->run();
 
@@ -455,7 +508,11 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
         self::fail(
             sprintf(
-                "Git command failed:\ncommand: %s\ncwd: %s\nstdout: %s\nstderr: %s",
+                "Git command failed:\n"
+                . "command: %s\n"
+                . "cwd: %s\n"
+                . "stdout: %s\n"
+                . "stderr: %s",
                 $command,
                 $workingDirectory,
                 $process->getOutput(),
@@ -467,8 +524,9 @@ final class SubtreeWorkflowE2ETest extends TestCase
     /**
      * @return array<string, array<string, mixed>>
      */
-    private function readSubtreesFromComposerManifest(string $composerJsonPath): array
-    {
+    private function readSubtreesFromComposerManifest(
+        string $composerJsonPath,
+    ): array {
         $contents = file_get_contents($composerJsonPath);
 
         self::assertIsString($contents);
@@ -486,7 +544,11 @@ final class SubtreeWorkflowE2ETest extends TestCase
         return array_reduce(
             array_keys($subtrees),
             fn(array $carry, mixed $key): array
-                => $this->appendSubtreeConfiguration($carry, $subtrees, $key),
+                => $this->appendSubtreeConfiguration(
+                    $carry,
+                    $subtrees,
+                    $key,
+                ),
             [],
         );
     }
@@ -494,8 +556,9 @@ final class SubtreeWorkflowE2ETest extends TestCase
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function readRepositoriesFromComposerManifest(string $composerJsonPath): array
-    {
+    private function readRepositoriesFromComposerManifest(
+        string $composerJsonPath,
+    ): array {
         $contents = file_get_contents($composerJsonPath);
 
         self::assertIsString($contents);
@@ -517,17 +580,8 @@ final class SubtreeWorkflowE2ETest extends TestCase
                 continue;
             }
 
-            $normalized = [];
-
-            foreach ($repository as $key => $value) {
-                if (!is_string($key)) {
-                    continue;
-                }
-
-                $normalized[$key] = $value;
-            }
-
-            $normalizedRepositories[] = $normalized;
+            $normalizedRepositories[]
+                = $this->normalizeSubtreeEntry($repository);
         }
 
         return $normalizedRepositories;
@@ -632,15 +686,20 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
             $path = $directory . '/' . $entry;
 
-            if (is_dir($path) && !is_link($path)) {
-                $this->removeDirectoryRecursively($path);
-
-                continue;
-            }
-
-            unlink($path);
+            $this->removeEntry($path);
         }
 
         rmdir($directory);
+    }
+
+    private function removeEntry(string $path): void
+    {
+        if (is_dir($path) && !is_link($path)) {
+            $this->removeDirectoryRecursively($path);
+
+            return;
+        }
+
+        unlink($path);
     }
 }

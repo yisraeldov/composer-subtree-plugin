@@ -133,7 +133,7 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         );
     }
 
-    public function testItPreservesExistingRepositoriesWhenAddingPathRepository(): void
+    public function testItPreservesRepositoriesWhenAddingPathRepository(): void
     {
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
@@ -173,7 +173,7 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         );
     }
 
-    public function testItDoesNotDuplicatePathRepositoryWhenAlreadyPresent(): void
+    public function testItAvoidsDuplicatePathRepository(): void
     {
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
@@ -200,7 +200,10 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         $composerManifest = $this->readComposerManifest($composerJsonPath);
         $repositories = $this->readRepositories($composerManifest);
 
-        self::assertSame(1, $this->countPathRepositories($repositories, 'packages/pcre'));
+        self::assertSame(
+            1,
+            $this->countPathRepositories($repositories, 'packages/pcre'),
+        );
     }
 
     public function testItPersistsSquashFlagWhenProvided(): void
@@ -404,10 +407,11 @@ final class SubtreeAddCommandExecuteTest extends TestCase
             'prefix' => 'packages/pcre;echo hacked',
         ]);
 
-        self::assertSame(
-            "git subtree add --prefix='packages/pcre;echo hacked' 'ssh:composer/pcre' 'main;echo hacked'",
-            $commands[0] ?? null,
-        );
+        $expectedCommand
+            = "git subtree add --prefix='packages/pcre;echo hacked' "
+            . "'ssh:composer/pcre' 'main;echo hacked'";
+
+        self::assertSame($expectedCommand, $commands[0] ?? null);
     }
 
     /**
@@ -590,17 +594,7 @@ final class SubtreeAddCommandExecuteTest extends TestCase
                 continue;
             }
 
-            $normalized = [];
-
-            foreach ($repository as $key => $value) {
-                if (!is_string($key)) {
-                    continue;
-                }
-
-                $normalized[$key] = $value;
-            }
-
-            $normalizedRepositories[] = $normalized;
+            $normalizedRepositories[] = $this->normalizeEntry($repository);
         }
 
         return $normalizedRepositories;
@@ -609,8 +603,10 @@ final class SubtreeAddCommandExecuteTest extends TestCase
     /**
      * @param array<int, array<string, mixed>> $repositories
      */
-    private function countPathRepositories(array $repositories, string $url): int
-    {
+    private function countPathRepositories(
+        array $repositories,
+        string $url,
+    ): int {
         return count(
             array_filter(
                 $repositories,
