@@ -9,6 +9,7 @@ use Composer\Command\BaseCommand;
 use Composer\Console\Application;
 use ComposerSubtreePlugin\Config\SubtreeConfig;
 use ComposerSubtreePlugin\Config\SubtreeConfigLoader;
+use ComposerSubtreePlugin\Config\SubtreeTargetResolver;
 use ComposerSubtreePlugin\Git\GitProcessRunner;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -40,46 +41,37 @@ final class SubtreePullCommand extends BaseCommand
         InputInterface $input,
         OutputInterface $output,
     ): int {
-        $subtreeConfig = $this->resolveSubtreeConfig(
-            $this->readTargetArgument($input),
-        );
+        $targetConfigs = $this->resolveTargetConfigs($input);
 
-        $this->gitRunner->runOrFail($this->buildFetchCommand($subtreeConfig));
-        $this->gitRunner->runOrFail($this->buildPullCommand($subtreeConfig));
+        foreach ($targetConfigs as $subtreeConfig) {
+            $this->gitRunner->runOrFail($this->buildFetchCommand($subtreeConfig));
+            $this->gitRunner->runOrFail($this->buildPullCommand($subtreeConfig));
 
-        $output->writeln(
-            sprintf('Successfully pulled subtree %s', $subtreeConfig->name()),
-        );
+            $output->writeln(
+                sprintf(
+                    'Successfully pulled subtree %s',
+                    $subtreeConfig->name(),
+                ),
+            );
+        }
 
         return self::SUCCESS;
     }
 
-    private function readTargetArgument(InputInterface $input): string
+    /**
+     * @return array<string, SubtreeConfig>
+     */
+    private function resolveTargetConfigs(InputInterface $input): array
     {
         $target = $input->getArgument('target');
-
-        if (!is_string($target) || $target === '' || $target === 'all') {
-            throw new \InvalidArgumentException(
-                'Provide a configured subtree name as target.',
-            );
+        if (!is_string($target)) {
+            $target = null;
         }
 
-        return $target;
-    }
-
-    private function resolveSubtreeConfig(string $target): SubtreeConfig
-    {
         $loader = new SubtreeConfigLoader();
         $configs = $loader->load($this->requireComposer()->getPackage());
-        $config = $configs[$target] ?? null;
 
-        if (!$config instanceof SubtreeConfig) {
-            throw new \InvalidArgumentException(
-                sprintf('Unknown subtree target: %s', $target),
-            );
-        }
-
-        return $config;
+        return (new SubtreeTargetResolver())->resolve($target, $configs);
     }
 
     private function buildFetchCommand(SubtreeConfig $subtreeConfig): string

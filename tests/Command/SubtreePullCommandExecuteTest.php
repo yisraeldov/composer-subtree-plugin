@@ -94,6 +94,102 @@ final class SubtreePullCommandExecuteTest extends TestCase
         self::assertSame(0, $tester->getStatusCode());
     }
 
+    public function testItPullsAllSubtreesWhenTargetIsOmitted(): void
+    {
+        $commands = [];
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::exactly(4))
+            ->method('runOrFail')
+            ->willReturnCallback(
+                function (string $command) use (&$commands): GitProcessResult {
+                    $commands[] = $command;
+
+                    return new GitProcessResult(0, '', '');
+                },
+            );
+
+        $tester = $this->createCommandTester(
+            $gitRunner,
+            [
+                'zeta/subtree' => [
+                    'package' => 'zeta/subtree',
+                    'prefix' => 'packages/zeta',
+                    'remote' => 'https://example.com/zeta.git',
+                    'branch' => 'main',
+                ],
+                'alpha/subtree' => [
+                    'package' => 'alpha/subtree',
+                    'prefix' => 'packages/alpha',
+                    'remote' => 'https://example.com/alpha.git',
+                    'branch' => 'master',
+                ],
+            ],
+        );
+
+        $tester->execute([]);
+
+        self::assertSame(
+            [
+                'git fetch https://example.com/alpha.git master',
+                'git subtree pull --prefix=packages/alpha '
+                . 'https://example.com/alpha.git master',
+                'git fetch https://example.com/zeta.git main',
+                'git subtree pull --prefix=packages/zeta '
+                . 'https://example.com/zeta.git main',
+            ],
+            $commands,
+        );
+        self::assertSame(0, $tester->getStatusCode());
+    }
+
+    public function testItPullsAllSubtreesWhenTargetIsAll(): void
+    {
+        $commands = [];
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::exactly(4))
+            ->method('runOrFail')
+            ->willReturnCallback(
+                function (string $command) use (&$commands): GitProcessResult {
+                    $commands[] = $command;
+
+                    return new GitProcessResult(0, '', '');
+                },
+            );
+
+        $tester = $this->createCommandTester(
+            $gitRunner,
+            [
+                'b/subtree' => [
+                    'package' => 'b/subtree',
+                    'prefix' => 'packages/b',
+                    'remote' => 'https://example.com/b.git',
+                    'branch' => 'main',
+                ],
+                'a/subtree' => [
+                    'package' => 'a/subtree',
+                    'prefix' => 'packages/a',
+                    'remote' => 'https://example.com/a.git',
+                    'branch' => 'main',
+                ],
+            ],
+        );
+
+        $tester->execute(['target' => 'all']);
+
+        self::assertSame(
+            [
+                'git fetch https://example.com/a.git main',
+                'git subtree pull --prefix=packages/a '
+                . 'https://example.com/a.git main',
+                'git fetch https://example.com/b.git main',
+                'git subtree pull --prefix=packages/b '
+                . 'https://example.com/b.git main',
+            ],
+            $commands,
+        );
+        self::assertSame(0, $tester->getStatusCode());
+    }
+
     public function testItFailsWhenNamedSubtreeIsNotConfigured(): void
     {
         $tester = $this->createCommandTester(
