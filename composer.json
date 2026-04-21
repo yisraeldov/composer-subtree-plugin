@@ -1,8 +1,24 @@
 {
     "name": "yisraeldov/composer-subtree-plugin",
     "description": "Composer plugin for safer git subtree workflows",
+    "keywords": [
+        "composer",
+        "plugin",
+        "git",
+        "subtree"
+    ],
+    "homepage": "https://github.com/yisraeldov/composer-subtree-plugin",
     "type": "composer-plugin",
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Yisrael Dov Lebow"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/yisraeldov/composer-subtree-plugin/issues",
+        "source": "https://github.com/yisraeldov/composer-subtree-plugin"
+    },
     "require": {
         "composer-plugin-api": "^2.2",
         "php": "^8.2"
