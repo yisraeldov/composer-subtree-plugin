@@ -6,7 +6,7 @@ namespace ComposerSubtreePlugin\Git;
 
 use Symfony\Component\Process\Process;
 
-final class GitProcessRunner
+class GitProcessRunner
 {
     public function run(string $command): GitProcessResult
     {
