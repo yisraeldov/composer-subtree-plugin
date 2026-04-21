@@ -14,11 +14,18 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 final class SubtreeAddCommandExecuteTest extends TestCase
 {
+    private const ADD_PCRE_GIT
+        = 'git subtree add --prefix=packages/pcre '
+        . 'https://github.com/composer/pcre.git main';
+    private const ADD_PCRE_NO_GIT
+        = 'git subtree add --prefix=packages/pcre '
+        . 'https://github.com/composer/pcre main';
+
     public function testItDefaultsPrefixToPackagesRepoName(): void
     {
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
-            ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre.git main')
+            ->with(self::ADD_PCRE_GIT)
             ->willReturn(new GitProcessResult(0, '', ''));
 
         [$tester] = $this->createIsolatedCommandTester($gitRunner);
@@ -37,7 +44,7 @@ final class SubtreeAddCommandExecuteTest extends TestCase
     {
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
-            ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre.git main')
+            ->with(self::ADD_PCRE_GIT)
             ->willReturn(new GitProcessResult(0, '', ''));
 
         [$tester] = $this->createIsolatedCommandTester($gitRunner);
@@ -54,7 +61,7 @@ final class SubtreeAddCommandExecuteTest extends TestCase
     {
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
-            ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre.git main --squash')
+            ->with(self::ADD_PCRE_GIT . ' --squash')
             ->willReturn(new GitProcessResult(0, '', ''));
 
         [$tester] = $this->createIsolatedCommandTester($gitRunner);
@@ -178,7 +185,7 @@ final class SubtreeAddCommandExecuteTest extends TestCase
     {
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
-            ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre.git main')
+            ->with(self::ADD_PCRE_GIT)
             ->willReturn(new GitProcessResult(0, '', ''));
 
         [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
@@ -209,15 +216,21 @@ final class SubtreeAddCommandExecuteTest extends TestCase
 
         self::assertArrayHasKey('psr/log', $subtrees);
         self::assertArrayHasKey('composer/pcre', $subtrees);
-        self::assertSame('packages/log', $subtrees['psr/log']['prefix'] ?? null);
-        self::assertSame('packages/pcre', $subtrees['composer/pcre']['prefix'] ?? null);
+        self::assertSame(
+            'packages/log',
+            $subtrees['psr/log']['prefix'] ?? null,
+        );
+        self::assertSame(
+            'packages/pcre',
+            $subtrees['composer/pcre']['prefix'] ?? null,
+        );
     }
 
     public function testItDerivesPackageAndPrefixWhenUrlHasNoGitSuffix(): void
     {
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
-            ->with('git subtree add --prefix=packages/pcre https://github.com/composer/pcre main')
+            ->with(self::ADD_PCRE_NO_GIT)
             ->willReturn(new GitProcessResult(0, '', ''));
 
         [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
@@ -264,7 +277,11 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         file_put_contents($composerJsonPath, $encoded . "\n");
 
         $composer = $this->createComposerWithEmptySubtrees();
-        $command = new SubtreeAddCommand($composer, $gitRunner, $composerJsonPath);
+        $command = new SubtreeAddCommand(
+            $composer,
+            $gitRunner,
+            $composerJsonPath,
+        );
 
         return [new CommandTester($command), $composerJsonPath];
     }
@@ -329,24 +346,59 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         $subtrees = $extra['subtrees'] ?? null;
         self::assertIsArray($subtrees);
 
+        return array_reduce(
+            array_keys($subtrees),
+            fn(array $carry, mixed $subtreeKey): array
+                => $this->appendNormalizedSubtree(
+                    $carry,
+                    $subtrees,
+                    $subtreeKey,
+                ),
+            [],
+        );
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $carry
+     * @param array<mixed> $subtrees
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function appendNormalizedSubtree(
+        array $carry,
+        array $subtrees,
+        mixed $subtreeKey,
+    ): array {
+        if (!is_string($subtreeKey)) {
+            return $carry;
+        }
+
+        $subtreeValue = $subtrees[$subtreeKey] ?? null;
+
+        if (!is_array($subtreeValue)) {
+            return $carry;
+        }
+
+        $carry[$subtreeKey] = $this->normalizeEntry($subtreeValue);
+
+        return $carry;
+    }
+
+    /**
+     * @param array<mixed> $entry
+     *
+     * @return array<string, mixed>
+     */
+    private function normalizeEntry(array $entry): array
+    {
         $normalized = [];
 
-        foreach ($subtrees as $subtreeKey => $subtreeValue) {
-            if (!is_string($subtreeKey) || !is_array($subtreeValue)) {
+        foreach ($entry as $entryKey => $entryValue) {
+            if (!is_string($entryKey)) {
                 continue;
             }
 
-            $entry = [];
-
-            foreach ($subtreeValue as $entryKey => $entryValue) {
-                if (!is_string($entryKey)) {
-                    continue;
-                }
-
-                $entry[$entryKey] = $entryValue;
-            }
-
-            $normalized[$subtreeKey] = $entry;
+            $normalized[$entryKey] = $entryValue;
         }
 
         return $normalized;
@@ -354,7 +406,11 @@ final class SubtreeAddCommandExecuteTest extends TestCase
 
     private function createTempDirectory(): string
     {
-        $path = sys_get_temp_dir() . '/composer-subtree-plugin-tests-' . uniqid('', true);
+        $path = sprintf(
+            '%s/composer-subtree-plugin-tests-%s',
+            sys_get_temp_dir(),
+            uniqid('', true),
+        );
         mkdir($path, 0777, true);
 
         return $path;

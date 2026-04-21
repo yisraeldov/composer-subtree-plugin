@@ -17,13 +17,20 @@ final class SubtreeAddCommandIntegrationTest extends TestCase
 {
     public function testItRunsGitSubtreeAddCommand(): void
     {
-        $tempDir = sys_get_temp_dir() . '/composer-subtree-plugin-tests-' . uniqid('', true);
+        $tempDir = sprintf(
+            '%s/composer-subtree-plugin-tests-%s',
+            sys_get_temp_dir(),
+            uniqid('', true),
+        );
         mkdir($tempDir, 0777, true);
         $composerJsonPath = $tempDir . '/composer.json';
 
         file_put_contents(
             $composerJsonPath,
-            json_encode(['name' => 'acme/app'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
+            json_encode(
+                ['name' => 'acme/app'],
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+            ) . "\n",
         );
 
         $composer = $this->createMock(Composer::class);
@@ -35,7 +42,11 @@ final class SubtreeAddCommandIntegrationTest extends TestCase
         $gitRunner->expects(self::once())->method('runOrFail')
             ->willReturn(new GitProcessResult(0, '', ''));
 
-        $command = new SubtreeAddCommand($composer, $gitRunner, $composerJsonPath);
+        $command = new SubtreeAddCommand(
+            $composer,
+            $gitRunner,
+            $composerJsonPath,
+        );
         $tester = new CommandTester($command);
 
         $tester->execute([
