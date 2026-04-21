@@ -1,0 +1,84 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ComposerSubtreePlugin\Tests\Command;
+
+use Composer\Composer;
+use Composer\Package\RootPackageInterface;
+use ComposerSubtreePlugin\Command\SubtreePushCommand;
+use ComposerSubtreePlugin\Git\GitProcessResult;
+use ComposerSubtreePlugin\Git\GitProcessRunner;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Tester\CommandTester;
+
+final class SubtreePushCommandExecuteTest extends TestCase
+{
+    public function testItRunsSubtreePushForNamedSubtree(): void
+    {
+        $commands = [];
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())
+            ->method('runOrFail')
+            ->willReturnCallback(
+                function (string $command) use (&$commands): GitProcessResult {
+                    $commands[] = $command;
+
+                    return new GitProcessResult(0, '', '');
+                },
+            );
+
+        $tester = $this->createCommandTester(
+            $gitRunner,
+            [
+                'composer/pcre' => [
+                    'package' => 'composer/pcre',
+                    'prefix' => 'packages/pcre',
+                    'remote' => 'https://github.com/composer/pcre.git',
+                    'branch' => 'main',
+                ],
+            ],
+        );
+
+        $tester->execute(['target' => 'composer/pcre']);
+
+        self::assertSame(
+            [
+                'git subtree push --prefix=packages/pcre '
+                . 'https://github.com/composer/pcre.git main',
+            ],
+            $commands,
+        );
+        self::assertSame(0, $tester->getStatusCode());
+    }
+
+    public function testItFailsWhenNamedSubtreeIsNotConfigured(): void
+    {
+        $tester = $this->createCommandTester(
+            $this->createMock(GitProcessRunner::class),
+            [],
+        );
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown subtree target: composer/pcre');
+
+        $tester->execute(['target' => 'composer/pcre']);
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $subtrees
+     */
+    private function createCommandTester(
+        GitProcessRunner $gitRunner,
+        array $subtrees,
+    ): CommandTester {
+        $composer = $this->createMock(Composer::class);
+        $package = $this->createMock(RootPackageInterface::class);
+        $package->method('getExtra')->willReturn(['subtrees' => $subtrees]);
+        $composer->method('getPackage')->willReturn($package);
+
+        return new CommandTester(
+            new SubtreePushCommand($composer, $gitRunner),
+        );
+    }
+}
