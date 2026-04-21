@@ -69,6 +69,14 @@ final class SubtreeAddInputParser
 
     private function extractPackageName(string $url): string
     {
+        $scpPath = $this->extractScpStylePath($url);
+
+        if (is_string($scpPath)) {
+            $suffix = $scpPath;
+
+            return $this->trimGitSuffix(trim($suffix, '/'));
+        }
+
         $path = parse_url($url, PHP_URL_PATH);
 
         if (is_string($path) && $path !== '') {
@@ -84,6 +92,15 @@ final class SubtreeAddInputParser
         $suffix = substr($url, $colonPosition + 1);
 
         return $this->trimGitSuffix(trim($suffix, '/'));
+    }
+
+    private function extractScpStylePath(string $url): ?string
+    {
+        if (preg_match('/^[^\/@:]+@[^\/:]+:(.+)$/', $url, $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[1];
     }
 
     private function trimGitSuffix(string $path): string

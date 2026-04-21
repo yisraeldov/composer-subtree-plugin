@@ -21,6 +21,9 @@ final class SubtreeAddCommandExecuteTest extends TestCase
     private const ADD_PCRE_NO_GIT
         = "git subtree add --prefix='packages/pcre' "
         . "'https://github.com/composer/pcre' 'main'";
+    private const ADD_SCP_HOOPLA
+        = "git subtree add --prefix='packages/hoopla-payroll' "
+        . "'git@github.com:Behavior-Analyst-Professional-Services/hoopla-payroll.git' 'master' --squash";
 
     public function testItDefaultsPrefixToPackagesRepoName(): void
     {
@@ -352,6 +355,44 @@ final class SubtreeAddCommandExecuteTest extends TestCase
                 'squash' => false,
             ],
             $this->readSubtreeEntry($composerManifest, 'composer/pcre'),
+        );
+    }
+
+    public function testItDerivesPackageNameFromScpStyleGitRemote(): void
+    {
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->with(self::ADD_SCP_HOOPLA)
+            ->willReturn(new GitProcessResult(0, '', ''));
+
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+        );
+
+        $tester->execute([
+            'upstream-url'
+                => 'git@github.com:Behavior-Analyst-Professional-Services/hoopla-payroll.git',
+            'upstream-branch' => 'master',
+            'prefix' => 'packages/hoopla-payroll',
+            '--squash' => true,
+        ]);
+
+        $composerManifest = $this->readComposerManifest($composerJsonPath);
+
+        self::assertSame(
+            [
+                'package'
+                    => 'Behavior-Analyst-Professional-Services/hoopla-payroll',
+                'prefix' => 'packages/hoopla-payroll',
+                'remote'
+                    => 'git@github.com:Behavior-Analyst-Professional-Services/hoopla-payroll.git',
+                'branch' => 'master',
+                'squash' => true,
+            ],
+            $this->readSubtreeEntry(
+                $composerManifest,
+                'Behavior-Analyst-Professional-Services/hoopla-payroll',
+            ),
         );
     }
 
