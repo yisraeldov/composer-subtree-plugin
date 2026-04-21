@@ -45,9 +45,9 @@ final class SubtreePullCommandExecuteTest extends TestCase
 
         self::assertSame(
             [
-                'git fetch https://github.com/composer/pcre.git main',
-                'git subtree pull --prefix=packages/pcre '
-                . 'https://github.com/composer/pcre.git main',
+                "git fetch 'https://github.com/composer/pcre.git' 'main'",
+                "git subtree pull --prefix='packages/pcre' "
+                . "'https://github.com/composer/pcre.git' 'main'",
             ],
             $commands,
         );
@@ -85,9 +85,9 @@ final class SubtreePullCommandExecuteTest extends TestCase
 
         self::assertSame(
             [
-                'git fetch https://github.com/php-fig/log.git master',
-                'git subtree pull --prefix=packages/log '
-                . 'https://github.com/php-fig/log.git master --squash',
+                "git fetch 'https://github.com/php-fig/log.git' 'master'",
+                "git subtree pull --prefix='packages/log' "
+                . "'https://github.com/php-fig/log.git' 'master' --squash",
             ],
             $commands,
         );
@@ -130,12 +130,12 @@ final class SubtreePullCommandExecuteTest extends TestCase
 
         self::assertSame(
             [
-                'git fetch https://example.com/alpha.git master',
-                'git subtree pull --prefix=packages/alpha '
-                . 'https://example.com/alpha.git master',
-                'git fetch https://example.com/zeta.git main',
-                'git subtree pull --prefix=packages/zeta '
-                . 'https://example.com/zeta.git main',
+                "git fetch 'https://example.com/alpha.git' 'master'",
+                "git subtree pull --prefix='packages/alpha' "
+                . "'https://example.com/alpha.git' 'master'",
+                "git fetch 'https://example.com/zeta.git' 'main'",
+                "git subtree pull --prefix='packages/zeta' "
+                . "'https://example.com/zeta.git' 'main'",
             ],
             $commands,
         );
@@ -178,12 +178,12 @@ final class SubtreePullCommandExecuteTest extends TestCase
 
         self::assertSame(
             [
-                'git fetch https://example.com/a.git main',
-                'git subtree pull --prefix=packages/a '
-                . 'https://example.com/a.git main',
-                'git fetch https://example.com/b.git main',
-                'git subtree pull --prefix=packages/b '
-                . 'https://example.com/b.git main',
+                "git fetch 'https://example.com/a.git' 'main'",
+                "git subtree pull --prefix='packages/a' "
+                . "'https://example.com/a.git' 'main'",
+                "git fetch 'https://example.com/b.git' 'main'",
+                "git subtree pull --prefix='packages/b' "
+                . "'https://example.com/b.git' 'main'",
             ],
             $commands,
         );

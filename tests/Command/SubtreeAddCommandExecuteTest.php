@@ -7,6 +7,7 @@ namespace ComposerSubtreePlugin\Tests\Command;
 use Composer\Composer;
 use Composer\Package\RootPackageInterface;
 use ComposerSubtreePlugin\Command\SubtreeAddCommand;
+use ComposerSubtreePlugin\Git\GitProcessException;
 use ComposerSubtreePlugin\Git\GitProcessResult;
 use ComposerSubtreePlugin\Git\GitProcessRunner;
 use PHPUnit\Framework\TestCase;
@@ -15,11 +16,11 @@ use Symfony\Component\Console\Tester\CommandTester;
 final class SubtreeAddCommandExecuteTest extends TestCase
 {
     private const ADD_PCRE_GIT
-        = 'git subtree add --prefix=packages/pcre '
-        . 'https://github.com/composer/pcre.git main';
+        = "git subtree add --prefix='packages/pcre' "
+        . "'https://github.com/composer/pcre.git' 'main'";
     private const ADD_PCRE_NO_GIT
-        = 'git subtree add --prefix=packages/pcre '
-        . 'https://github.com/composer/pcre main';
+        = "git subtree add --prefix='packages/pcre' "
+        . "'https://github.com/composer/pcre' 'main'";
 
     public function testItDefaultsPrefixToPackagesRepoName(): void
     {
@@ -253,6 +254,64 @@ final class SubtreeAddCommandExecuteTest extends TestCase
                 'squash' => false,
             ],
             $this->readSubtreeEntry($composerManifest, 'composer/pcre'),
+        );
+    }
+
+    public function testItDoesNotPersistConfigWhenGitCommandFails(): void
+    {
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->with(self::ADD_PCRE_GIT)
+            ->willThrowException(
+                new GitProcessException(
+                    'Git command failed',
+                    self::ADD_PCRE_GIT,
+                    1,
+                    'fatal',
+                ),
+            );
+
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            ['name' => 'acme/app'],
+        );
+
+        try {
+            $tester->execute([
+                'upstream-url' => 'https://github.com/composer/pcre.git',
+                'upstream-branch' => 'main',
+            ]);
+            self::fail('Expected git failure exception was not thrown.');
+        } catch (GitProcessException) {
+            $composerManifest = $this->readComposerManifest($composerJsonPath);
+            self::assertArrayNotHasKey('extra', $composerManifest);
+        }
+    }
+
+    public function testItEscapesShellArgumentsInGitSubtreeAddCommand(): void
+    {
+        $commands = [];
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->willReturnCallback(
+                function (string $command) use (&$commands): GitProcessResult {
+                    $commands[] = $command;
+
+                    return new GitProcessResult(0, '', '');
+                },
+            );
+
+        [$tester] = $this->createIsolatedCommandTester($gitRunner);
+
+        $tester->execute([
+            'upstream-url' => 'ssh:composer/pcre',
+            'upstream-branch' => 'main;echo hacked',
+            'prefix' => 'packages/pcre;echo hacked',
+        ]);
+
+        self::assertSame(
+            "git subtree add --prefix='packages/pcre;echo hacked' 'ssh:composer/pcre' 'main;echo hacked'",
+            $commands[0] ?? null,
         );
     }
 

@@ -79,9 +79,9 @@ final class SubtreePushCommand extends BaseCommand
     {
         return sprintf(
             'git subtree push --prefix=%s %s %s',
-            $subtreeConfig->prefix(),
-            $subtreeConfig->remote(),
-            $subtreeConfig->branch(),
+            escapeshellarg($subtreeConfig->prefix()),
+            escapeshellarg($subtreeConfig->remote()),
+            escapeshellarg($subtreeConfig->branch()),
         );
     }
 }

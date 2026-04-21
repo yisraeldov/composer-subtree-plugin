@@ -82,8 +82,8 @@ final class SubtreePullCommand extends BaseCommand
     {
         return sprintf(
             'git fetch %s %s',
-            $subtreeConfig->remote(),
-            $subtreeConfig->branch(),
+            escapeshellarg($subtreeConfig->remote()),
+            escapeshellarg($subtreeConfig->branch()),
         );
     }
 
@@ -91,9 +91,9 @@ final class SubtreePullCommand extends BaseCommand
     {
         $command = sprintf(
             'git subtree pull --prefix=%s %s %s',
-            $subtreeConfig->prefix(),
-            $subtreeConfig->remote(),
-            $subtreeConfig->branch(),
+            escapeshellarg($subtreeConfig->prefix()),
+            escapeshellarg($subtreeConfig->remote()),
+            escapeshellarg($subtreeConfig->branch()),
         );
 
         if (!$subtreeConfig->squash()) {

@@ -44,8 +44,8 @@ final class SubtreePushCommandExecuteTest extends TestCase
 
         self::assertSame(
             [
-                'git subtree push --prefix=packages/pcre '
-                . 'https://github.com/composer/pcre.git main',
+                "git subtree push --prefix='packages/pcre' "
+                . "'https://github.com/composer/pcre.git' 'main'",
             ],
             $commands,
         );
@@ -101,10 +101,10 @@ final class SubtreePushCommandExecuteTest extends TestCase
 
         self::assertSame(
             [
-                'git subtree push --prefix=packages/alpha '
-                . 'https://example.com/alpha.git master',
-                'git subtree push --prefix=packages/zeta '
-                . 'https://example.com/zeta.git main',
+                "git subtree push --prefix='packages/alpha' "
+                . "'https://example.com/alpha.git' 'master'",
+                "git subtree push --prefix='packages/zeta' "
+                . "'https://example.com/zeta.git' 'main'",
             ],
             $commands,
         );
@@ -147,10 +147,10 @@ final class SubtreePushCommandExecuteTest extends TestCase
 
         self::assertSame(
             [
-                'git subtree push --prefix=packages/a '
-                . 'https://example.com/a.git main',
-                'git subtree push --prefix=packages/b '
-                . 'https://example.com/b.git main',
+                "git subtree push --prefix='packages/a' "
+                . "'https://example.com/a.git' 'main'",
+                "git subtree push --prefix='packages/b' "
+                . "'https://example.com/b.git' 'main'",
             ],
             $commands,
         );

@@ -64,11 +64,11 @@ final class SubtreeAddCommand extends BaseCommand
         $this->assertSupportedSubtreeKey($subtreeConfig->name());
         $gitCommand = $this->buildGitSubtreeAddCommand($subtreeConfig);
 
-        $this->persistSubtreeConfig($subtreeConfig);
-
         $output->writeln('Running: ' . $gitCommand);
 
         $this->gitRunner->runOrFail($gitCommand);
+
+        $this->persistSubtreeConfig($subtreeConfig);
 
         $output->writeln(
             'Successfully added subtree at ' . $subtreeConfig->prefix(),
@@ -81,9 +81,9 @@ final class SubtreeAddCommand extends BaseCommand
     {
         $command = sprintf(
             'git subtree add --prefix=%s %s %s',
-            $config->prefix(),
-            $config->remote(),
-            $config->branch(),
+            escapeshellarg($config->prefix()),
+            escapeshellarg($config->remote()),
+            escapeshellarg($config->branch()),
         );
 
         if ($config->squash()) {
