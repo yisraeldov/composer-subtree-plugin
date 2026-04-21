@@ -11,6 +11,7 @@ use Composer\Factory;
 use Composer\Json\JsonFile;
 use ComposerSubtreePlugin\Config\SubtreeConfig;
 use ComposerSubtreePlugin\Git\GitProcessRunner;
+use ComposerSubtreePlugin\Git\SubtreeGitCommandBuilder;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -23,6 +24,7 @@ final class SubtreeAddCommand extends BaseCommand
         private readonly GitProcessRunner $gitRunner,
         private readonly ?string $composerJsonPath = null,
         private readonly ?SubtreeAddInputParser $inputParser = null,
+        private readonly ?SubtreeGitCommandBuilder $commandBuilder = null,
     ) {
         parent::__construct('subtree:add');
         $this->setComposer($composer);
@@ -79,18 +81,7 @@ final class SubtreeAddCommand extends BaseCommand
 
     private function buildGitSubtreeAddCommand(SubtreeConfig $config): string
     {
-        $command = sprintf(
-            'git subtree add --prefix=%s %s %s',
-            escapeshellarg($config->prefix()),
-            escapeshellarg($config->remote()),
-            escapeshellarg($config->branch()),
-        );
-
-        if ($config->squash()) {
-            return $command . ' --squash';
-        }
-
-        return $command;
+        return $this->commandBuilder()->add($config);
     }
 
     private function assertSupportedSubtreeKey(string $key): void
@@ -173,5 +164,14 @@ final class SubtreeAddCommand extends BaseCommand
         }
 
         return new SubtreeAddInputParser();
+    }
+
+    private function commandBuilder(): SubtreeGitCommandBuilder
+    {
+        if ($this->commandBuilder instanceof SubtreeGitCommandBuilder) {
+            return $this->commandBuilder;
+        }
+
+        return new SubtreeGitCommandBuilder();
     }
 }

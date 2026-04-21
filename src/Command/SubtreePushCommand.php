@@ -10,6 +10,7 @@ use Composer\Console\Application;
 use ComposerSubtreePlugin\Config\SubtreeConfig;
 use ComposerSubtreePlugin\Config\SubtreeTargetConfigProvider;
 use ComposerSubtreePlugin\Git\GitProcessRunner;
+use ComposerSubtreePlugin\Git\SubtreeGitCommandBuilder;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,6 +21,7 @@ final class SubtreePushCommand extends BaseCommand
         Composer $composer,
         private readonly GitProcessRunner $gitRunner,
         private readonly ?SubtreeTargetConfigProvider $targetConfigProvider = null,
+        private readonly ?SubtreeGitCommandBuilder $commandBuilder = null,
     ) {
         parent::__construct('subtree:push');
         $this->setComposer($composer);
@@ -45,7 +47,7 @@ final class SubtreePushCommand extends BaseCommand
 
         foreach ($targetConfigs as $subtreeConfig) {
             $this->gitRunner->runOrFail(
-                $this->buildPushCommand($subtreeConfig),
+                $this->commandBuilder()->push($subtreeConfig),
             );
 
             $output->writeln(
@@ -79,13 +81,12 @@ final class SubtreePushCommand extends BaseCommand
         return new SubtreeTargetConfigProvider();
     }
 
-    private function buildPushCommand(SubtreeConfig $subtreeConfig): string
+    private function commandBuilder(): SubtreeGitCommandBuilder
     {
-        return sprintf(
-            'git subtree push --prefix=%s %s %s',
-            escapeshellarg($subtreeConfig->prefix()),
-            escapeshellarg($subtreeConfig->remote()),
-            escapeshellarg($subtreeConfig->branch()),
-        );
+        if ($this->commandBuilder instanceof SubtreeGitCommandBuilder) {
+            return $this->commandBuilder;
+        }
+
+        return new SubtreeGitCommandBuilder();
     }
 }

@@ -10,6 +10,7 @@ use Composer\Console\Application;
 use ComposerSubtreePlugin\Config\SubtreeConfig;
 use ComposerSubtreePlugin\Config\SubtreeTargetConfigProvider;
 use ComposerSubtreePlugin\Git\GitProcessRunner;
+use ComposerSubtreePlugin\Git\SubtreeGitCommandBuilder;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,6 +21,7 @@ final class SubtreePullCommand extends BaseCommand
         Composer $composer,
         private readonly GitProcessRunner $gitRunner,
         private readonly ?SubtreeTargetConfigProvider $targetConfigProvider = null,
+        private readonly ?SubtreeGitCommandBuilder $commandBuilder = null,
     ) {
         parent::__construct('subtree:pull');
         $this->setComposer($composer);
@@ -45,10 +47,10 @@ final class SubtreePullCommand extends BaseCommand
 
         foreach ($targetConfigs as $subtreeConfig) {
             $this->gitRunner->runOrFail(
-                $this->buildFetchCommand($subtreeConfig),
+                $this->commandBuilder()->fetch($subtreeConfig),
             );
             $this->gitRunner->runOrFail(
-                $this->buildPullCommand($subtreeConfig),
+                $this->commandBuilder()->pull($subtreeConfig),
             );
 
             $output->writeln(
@@ -82,28 +84,12 @@ final class SubtreePullCommand extends BaseCommand
         return new SubtreeTargetConfigProvider();
     }
 
-    private function buildFetchCommand(SubtreeConfig $subtreeConfig): string
+    private function commandBuilder(): SubtreeGitCommandBuilder
     {
-        return sprintf(
-            'git fetch %s %s',
-            escapeshellarg($subtreeConfig->remote()),
-            escapeshellarg($subtreeConfig->branch()),
-        );
-    }
-
-    private function buildPullCommand(SubtreeConfig $subtreeConfig): string
-    {
-        $command = sprintf(
-            'git subtree pull --prefix=%s %s %s',
-            escapeshellarg($subtreeConfig->prefix()),
-            escapeshellarg($subtreeConfig->remote()),
-            escapeshellarg($subtreeConfig->branch()),
-        );
-
-        if (!$subtreeConfig->squash()) {
-            return $command;
+        if ($this->commandBuilder instanceof SubtreeGitCommandBuilder) {
+            return $this->commandBuilder;
         }
 
-        return $command . ' --squash';
+        return new SubtreeGitCommandBuilder();
     }
 }
