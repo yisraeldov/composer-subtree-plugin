@@ -89,6 +89,10 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
             $subtrees = $this->readSubtreesFromComposerManifest($composerJsonPath);
             self::assertCount(1, $subtrees);
+            self::assertContains(
+                ['type' => 'path', 'url' => 'packages/library'],
+                $this->readRepositoriesFromComposerManifest($composerJsonPath),
+            );
 
             $this->runGitCommand('git add .', $consumerPath);
             $this->runGitCommand(
@@ -485,6 +489,48 @@ final class SubtreeWorkflowE2ETest extends TestCase
                 => $this->appendSubtreeConfiguration($carry, $subtrees, $key),
             [],
         );
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function readRepositoriesFromComposerManifest(string $composerJsonPath): array
+    {
+        $contents = file_get_contents($composerJsonPath);
+
+        self::assertIsString($contents);
+
+        $decoded = json_decode($contents, true);
+
+        self::assertIsArray($decoded);
+
+        $repositories = $decoded['repositories'] ?? null;
+
+        if (!is_array($repositories)) {
+            return [];
+        }
+
+        $normalizedRepositories = [];
+
+        foreach ($repositories as $repository) {
+            if (!is_array($repository)) {
+                continue;
+            }
+
+            $normalized = [];
+
+            foreach ($repository as $key => $value) {
+                if (!is_string($key)) {
+                    continue;
+                }
+
+                $normalized[$key] = $value;
+            }
+
+            $normalizedRepositories[] = $normalized;
+        }
+
+        return $normalizedRepositories;
     }
 
     /**

@@ -108,6 +108,101 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         );
     }
 
+    public function testItAddsPathRepositoryForAddedSubtree(): void
+    {
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->willReturn(new GitProcessResult(0, '', ''));
+
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            ['name' => 'acme/app', 'extra' => ['subtrees' => []]],
+        );
+
+        $tester->execute([
+            'upstream-url' => 'https://github.com/composer/pcre.git',
+            'upstream-branch' => 'main',
+        ]);
+
+        $composerManifest = $this->readComposerManifest($composerJsonPath);
+        $repositories = $this->readRepositories($composerManifest);
+
+        self::assertContains(
+            ['type' => 'path', 'url' => 'packages/pcre'],
+            $repositories,
+        );
+    }
+
+    public function testItPreservesExistingRepositoriesWhenAddingPathRepository(): void
+    {
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->willReturn(new GitProcessResult(0, '', ''));
+
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            [
+                'name' => 'acme/app',
+                'repositories' => [
+                    [
+                        'type' => 'vcs',
+                        'url' => 'https://github.com/acme/private-package.git',
+                    ],
+                ],
+            ],
+        );
+
+        $tester->execute([
+            'upstream-url' => 'https://github.com/composer/pcre.git',
+            'upstream-branch' => 'main',
+        ]);
+
+        $composerManifest = $this->readComposerManifest($composerJsonPath);
+        $repositories = $this->readRepositories($composerManifest);
+
+        self::assertContains(
+            [
+                'type' => 'vcs',
+                'url' => 'https://github.com/acme/private-package.git',
+            ],
+            $repositories,
+        );
+        self::assertContains(
+            ['type' => 'path', 'url' => 'packages/pcre'],
+            $repositories,
+        );
+    }
+
+    public function testItDoesNotDuplicatePathRepositoryWhenAlreadyPresent(): void
+    {
+        $gitRunner = $this->createMock(GitProcessRunner::class);
+        $gitRunner->expects(self::once())->method('runOrFail')
+            ->willReturn(new GitProcessResult(0, '', ''));
+
+        [$tester, $composerJsonPath] = $this->createIsolatedCommandTester(
+            $gitRunner,
+            [
+                'name' => 'acme/app',
+                'repositories' => [
+                    [
+                        'type' => 'path',
+                        'url' => 'packages/pcre',
+                    ],
+                ],
+            ],
+        );
+
+        $tester->execute([
+            'upstream-url' => 'https://github.com/composer/pcre.git',
+            'upstream-branch' => 'main',
+        ]);
+
+        $composerManifest = $this->readComposerManifest($composerJsonPath);
+        $repositories = $this->readRepositories($composerManifest);
+
+        self::assertSame(1, $this->countPathRepositories($repositories, 'packages/pcre'));
+    }
+
     public function testItPersistsSquashFlagWhenProvided(): void
     {
         $gitRunner = $this->createMock(GitProcessRunner::class);
@@ -473,6 +568,57 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         mkdir($path, 0777, true);
 
         return $path;
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function readRepositories(array $manifest): array
+    {
+        $repositories = $manifest['repositories'] ?? null;
+
+        if (!is_array($repositories)) {
+            return [];
+        }
+
+        $normalizedRepositories = [];
+
+        foreach ($repositories as $repository) {
+            if (!is_array($repository)) {
+                continue;
+            }
+
+            $normalized = [];
+
+            foreach ($repository as $key => $value) {
+                if (!is_string($key)) {
+                    continue;
+                }
+
+                $normalized[$key] = $value;
+            }
+
+            $normalizedRepositories[] = $normalized;
+        }
+
+        return $normalizedRepositories;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $repositories
+     */
+    private function countPathRepositories(array $repositories, string $url): int
+    {
+        return count(
+            array_filter(
+                $repositories,
+                static fn(array $repository): bool
+                    => ($repository['type'] ?? null) === 'path'
+                        && ($repository['url'] ?? null) === $url,
+            ),
+        );
     }
 
     private function createComposerWithEmptySubtrees(): Composer

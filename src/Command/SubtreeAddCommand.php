@@ -117,8 +117,50 @@ final class SubtreeAddCommand extends BaseCommand
 
         $extra['subtrees'] = $subtrees;
         $manifest['extra'] = $extra;
+        $manifest['repositories'] = $this->ensurePathRepository(
+            $manifest['repositories'] ?? [],
+            $config->prefix(),
+        );
 
         $jsonFile->write($manifest);
+    }
+
+    /**
+     * @param mixed $repositories
+     *
+     * @return array<mixed>
+     */
+    private function ensurePathRepository(mixed $repositories, string $prefix): array
+    {
+        if (!is_array($repositories)) {
+            return [['type' => 'path', 'url' => $prefix]];
+        }
+
+        if ($this->hasPathRepositoryForPrefix($repositories, $prefix)) {
+            return $repositories;
+        }
+
+        $repositories[] = ['type' => 'path', 'url' => $prefix];
+
+        return $repositories;
+    }
+
+    /**
+     * @param array<mixed> $repositories
+     */
+    private function hasPathRepositoryForPrefix(array $repositories, string $prefix): bool
+    {
+        return array_reduce(
+            $repositories,
+            static fn(bool $hasRepository, mixed $repository): bool
+                => $hasRepository
+                    || (
+                        is_array($repository)
+                        && ($repository['type'] ?? null) === 'path'
+                        && ($repository['url'] ?? null) === $prefix
+                    ),
+            false,
+        );
     }
 
     private function resolveComposerJsonPath(): string

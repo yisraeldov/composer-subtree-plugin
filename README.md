@@ -96,6 +96,7 @@ composer subtree:add https://github.com/composer/pcre.git main
 What it does:
 1. Runs `git subtree add --prefix=... <remote> <branch> [--squash]`
 2. Writes/updates the subtree entry in `composer.json` at `extra.subtrees`
+3. Ensures `composer.json.repositories` contains a path repository entry for the subtree prefix
 
 Notes:
 - If `prefix` is omitted, default is `packages/<repo-name>`.
