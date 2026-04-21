@@ -1,9 +1,10 @@
 {
     "name": "yisraeldov/composer-subtree-plugin",
     "description": "Composer plugin for safer git subtree workflows",
-    "type": "library",
+    "type": "composer-plugin",
     "license": "MIT",
     "require": {
+        "composer-plugin-api": "^2.2",
         "php": "^8.2"
     },
     "require-dev": {
@@ -47,5 +48,8 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "extra": {
+        "class": "ComposerSubtreePlugin\\Plugin"
+    }
 }

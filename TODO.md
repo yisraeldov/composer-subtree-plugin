@@ -8,10 +8,10 @@ Legend:
 ## Track A - Fastest path to useful commands (ASAP)
 
 ### Slice 1 - Installable plugin skeleton
-- [ ] Create plugin package wiring (`type: composer-plugin`, PSR-4, `extra.class`).
-- [ ] Implement minimal `Plugin` + command provider registration.
-- [ ] Add constraints: `php:^8.2`, `composer-plugin-api:^2.2`.
-- [ ] DoD: plugin installs and activates without errors.
+- [x] Create plugin package wiring (`type: composer-plugin`, PSR-4, `extra.class`).
+- [x] Implement minimal `Plugin` + command provider registration.
+- [x] Add constraints: `php:^8.2`, `composer-plugin-api:^2.2`.
+- [x] DoD: plugin installs and activates without errors.
 
 ### Slice 2 - Minimal subtree config loader (happy path)
 - [ ] Read `extra.subtrees` from root `composer.json`.
