@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ruleset xmlns="http://pmd.sf.net/ruleset/1.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.net/ruleset_xml_schema.xsd"
+         name="composer-subtree-plugin">
+    <description>PHP_CodeSniffer rules for composer-subtree-plugin</description>
+
+    <file name="src"/>
+    <file name="tests"/>
+
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="80"/>
+            <property name="absoluteLineLimit" value="80"/>
+        </properties>
+    </rule>
+
+    <rule ref="Generic.Metrics.CyclomaticComplexity">
+        <properties>
+            <property name="complexity" value="5"/>
+            <property name="absoluteComplexity" value="10"/>
+        </properties>
+    </rule>
+</ruleset>
