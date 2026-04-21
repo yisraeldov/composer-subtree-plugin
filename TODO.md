@@ -34,11 +34,11 @@ Legend:
 - [x] DoD: one command adds config entry + performs initial subtree add.
 
 ### Slice 5 - `composer subtree:pull` single target (MVP)
-- [ ] Add command: `composer subtree:pull [name|all]`.
-- [ ] Support named subtree pull.
-- [ ] Run `git fetch` then `git subtree pull --prefix=... <remote> <branch>`.
-- [ ] Respect per-subtree `squash` setting.
-- [ ] DoD: `composer subtree:pull <name>` works end-to-end.
+- [x] Add command: `composer subtree:pull [name|all]`.
+- [x] Support named subtree pull.
+- [x] Run `git fetch` then `git subtree pull --prefix=... <remote> <branch>`.
+- [x] Respect per-subtree `squash` setting.
+- [x] DoD: `composer subtree:pull <name>` works end-to-end.
 
 ### Slice 6 - `composer subtree:push` single target (MVP)
 - [ ] Add command: `composer subtree:push [name|all]`.

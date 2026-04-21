@@ -40,34 +40,12 @@ final class SubtreePullCommand extends BaseCommand
         InputInterface $input,
         OutputInterface $output,
     ): int {
-        $target = $input->getArgument('target');
-
-        if (!is_string($target) || $target === '' || $target === 'all') {
-            throw new \InvalidArgumentException(
-                'Provide a configured subtree name as target.',
-            );
-        }
-
-        $subtreeConfig = $this->resolveSubtreeConfig($target);
-
-        $fetchCommand = sprintf(
-            'git fetch %s %s',
-            $subtreeConfig->remote(),
-            $subtreeConfig->branch(),
-        );
-        $pullCommand = sprintf(
-            'git subtree pull --prefix=%s %s %s',
-            $subtreeConfig->prefix(),
-            $subtreeConfig->remote(),
-            $subtreeConfig->branch(),
+        $subtreeConfig = $this->resolveSubtreeConfig(
+            $this->readTargetArgument($input),
         );
 
-        if ($subtreeConfig->squash()) {
-            $pullCommand .= ' --squash';
-        }
-
-        $this->gitRunner->runOrFail($fetchCommand);
-        $this->gitRunner->runOrFail($pullCommand);
+        $this->gitRunner->runOrFail($this->buildFetchCommand($subtreeConfig));
+        $this->gitRunner->runOrFail($this->buildPullCommand($subtreeConfig));
 
         $output->writeln(
             sprintf('Successfully pulled subtree %s', $subtreeConfig->name()),
@@ -76,10 +54,23 @@ final class SubtreePullCommand extends BaseCommand
         return self::SUCCESS;
     }
 
+    private function readTargetArgument(InputInterface $input): string
+    {
+        $target = $input->getArgument('target');
+
+        if (!is_string($target) || $target === '' || $target === 'all') {
+            throw new \InvalidArgumentException(
+                'Provide a configured subtree name as target.',
+            );
+        }
+
+        return $target;
+    }
+
     private function resolveSubtreeConfig(string $target): SubtreeConfig
     {
         $loader = new SubtreeConfigLoader();
-        $configs = $loader->load($this->getComposer()->getPackage());
+        $configs = $loader->load($this->requireComposer()->getPackage());
         $config = $configs[$target] ?? null;
 
         if (!$config instanceof SubtreeConfig) {
@@ -89,5 +80,30 @@ final class SubtreePullCommand extends BaseCommand
         }
 
         return $config;
+    }
+
+    private function buildFetchCommand(SubtreeConfig $subtreeConfig): string
+    {
+        return sprintf(
+            'git fetch %s %s',
+            $subtreeConfig->remote(),
+            $subtreeConfig->branch(),
+        );
+    }
+
+    private function buildPullCommand(SubtreeConfig $subtreeConfig): string
+    {
+        $command = sprintf(
+            'git subtree pull --prefix=%s %s %s',
+            $subtreeConfig->prefix(),
+            $subtreeConfig->remote(),
+            $subtreeConfig->branch(),
+        );
+
+        if (!$subtreeConfig->squash()) {
+            return $command;
+        }
+
+        return $command . ' --squash';
     }
 }
