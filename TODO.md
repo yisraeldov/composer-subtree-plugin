@@ -41,15 +41,15 @@ Legend:
 - [x] DoD: `composer subtree:pull <name>` works end-to-end.
 
 ### Slice 6 - `composer subtree:push` single target (MVP)
-- [ ] Add command: `composer subtree:push [name|all]`.
-- [ ] Support named subtree push.
-- [ ] Run `git subtree push --prefix=... <remote> <branch>`.
-- [ ] DoD: `composer subtree:push <name>` works end-to-end.
+- [x] Add command: `composer subtree:push [name|all]`.
+- [x] Support named subtree push.
+- [x] Run `git subtree push --prefix=... <remote> <branch>`.
+- [x] DoD: `composer subtree:push <name>` works end-to-end.
 
 ### Slice 7 - `all` target behavior for pull/push
-- [ ] Make default target `all` for pull and push when no arg is provided.
-- [ ] Execute in deterministic order (sorted by logical subtree name).
-- [ ] DoD: `composer subtree:pull` and `composer subtree:push` process all reliably.
+- [x] Make default target `all` for pull and push when no arg is provided.
+- [x] Execute in deterministic order (sorted by logical subtree name).
+- [x] DoD: `composer subtree:pull` and `composer subtree:push` process all reliably.
 
 ## Track B - Core usability and visibility
 

@@ -44,8 +44,12 @@ final class SubtreePullCommand extends BaseCommand
         $targetConfigs = $this->resolveTargetConfigs($input);
 
         foreach ($targetConfigs as $subtreeConfig) {
-            $this->gitRunner->runOrFail($this->buildFetchCommand($subtreeConfig));
-            $this->gitRunner->runOrFail($this->buildPullCommand($subtreeConfig));
+            $this->gitRunner->runOrFail(
+                $this->buildFetchCommand($subtreeConfig),
+            );
+            $this->gitRunner->runOrFail(
+                $this->buildPullCommand($subtreeConfig),
+            );
 
             $output->writeln(
                 sprintf(

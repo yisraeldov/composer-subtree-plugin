@@ -44,7 +44,9 @@ final class SubtreePushCommand extends BaseCommand
         $targetConfigs = $this->resolveTargetConfigs($input);
 
         foreach ($targetConfigs as $subtreeConfig) {
-            $this->gitRunner->runOrFail($this->buildPushCommand($subtreeConfig));
+            $this->gitRunner->runOrFail(
+                $this->buildPushCommand($subtreeConfig),
+            );
 
             $output->writeln(
                 sprintf(
