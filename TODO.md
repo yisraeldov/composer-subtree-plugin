@@ -25,12 +25,13 @@ Legend:
 - [x] DoD: all git calls use one runner with consistent failures.
 
 ### Slice 4 - `composer subtree:add` (MVP)
-- [ ] Add command: `composer subtree:add <upstream-url> <upstream-branch> [prefix] [--squash]`.
-- [ ] Default prefix to `packages/<repo-name>` when omitted.
-- [ ] Default `squash=false`.
-- [ ] Append subtree entry under `extra.subtrees` in `composer.json`.
-- [ ] Run `git subtree add --prefix=<prefix> <remote> <branch>` (with squash flag when set).
-- [ ] DoD: one command adds config entry + performs initial subtree add.
+- [x] Add command: `composer subtree:add <upstream-url> <upstream-branch> [prefix] [--squash]`.
+- [x] Default prefix to `packages/<repo-name>` when omitted.
+- [x] Default `squash=false`.
+- [x] Update `composer.json` by appending a subtree entry under `extra.subtrees`.
+- [x] Persist full subtree config fields in `composer.json`: `package`, `prefix`, `remote`, `branch`, `squash`.
+- [x] Run `git subtree add --prefix=<prefix> <remote> <branch>` (with squash flag when set).
+- [x] DoD: one command adds config entry + performs initial subtree add.
 
 ### Slice 5 - `composer subtree:pull` single target (MVP)
 - [ ] Add command: `composer subtree:pull [name|all]`.

@@ -5,22 +5,31 @@ declare(strict_types=1);
 namespace ComposerSubtreePlugin\Tests\Command;
 
 use Composer\Composer;
-use Composer\IO\IOInterface;
 use ComposerSubtreePlugin\Command\SubtreeAddCommand;
+use ComposerSubtreePlugin\Git\GitProcessRunner;
 use PHPUnit\Framework\TestCase;
 
 final class SubtreeAddCommandTest extends TestCase
 {
+    private Composer $composer;
+    private GitProcessRunner $gitRunner;
+
+    protected function setUp(): void
+    {
+        $this->composer = $this->createMock(Composer::class);
+        $this->gitRunner = $this->createMock(GitProcessRunner::class);
+    }
+
     public function testItHasCorrectName(): void
     {
-        $command = new SubtreeAddCommand();
+        $command = new SubtreeAddCommand($this->composer, $this->gitRunner);
 
         self::assertSame('subtree:add', $command->getName());
     }
 
     public function testItRequiresUpstreamUrlArgument(): void
     {
-        $command = new SubtreeAddCommand();
+        $command = new SubtreeAddCommand($this->composer, $this->gitRunner);
         $definition = $command->getDefinition();
 
         self::assertTrue($definition->hasArgument('upstream-url'));
@@ -31,7 +40,7 @@ final class SubtreeAddCommandTest extends TestCase
 
     public function testItRequiresUpstreamBranchArgument(): void
     {
-        $command = new SubtreeAddCommand();
+        $command = new SubtreeAddCommand($this->composer, $this->gitRunner);
         $definition = $command->getDefinition();
 
         self::assertTrue($definition->hasArgument('upstream-branch'));
@@ -42,7 +51,7 @@ final class SubtreeAddCommandTest extends TestCase
 
     public function testItHasOptionalPrefixArgument(): void
     {
-        $command = new SubtreeAddCommand();
+        $command = new SubtreeAddCommand($this->composer, $this->gitRunner);
         $definition = $command->getDefinition();
 
         self::assertTrue($definition->hasArgument('prefix'));
@@ -53,9 +62,10 @@ final class SubtreeAddCommandTest extends TestCase
 
     public function testItHasSquashOption(): void
     {
-        $command = new SubtreeAddCommand();
+        $command = new SubtreeAddCommand($this->composer, $this->gitRunner);
         $definition = $command->getDefinition();
 
         self::assertTrue($definition->hasOption('squash'));
     }
+
 }

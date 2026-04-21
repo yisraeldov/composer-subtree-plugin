@@ -45,8 +45,14 @@ final class GitProcessRunnerTest extends TestCase
         try {
             $runner->runOrFail('git status --not-a-valid-option');
         } catch (GitProcessException $e) {
-            self::assertStringContainsString('unknown option', $e->getMessage());
-            self::assertSame('git status --not-a-valid-option', $e->getCommand());
+            self::assertStringContainsString(
+                'unknown option',
+                $e->getMessage(),
+            );
+            self::assertSame(
+                'git status --not-a-valid-option',
+                $e->getCommand(),
+            );
 
             return;
         }

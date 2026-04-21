@@ -36,7 +36,10 @@ final class SubtreeConfigTest extends TestCase
         self::assertSame('pcre', $config->name());
         self::assertSame('composer/pcre', $config->package());
         self::assertSame('packages/pcre', $config->prefix());
-        self::assertSame('https://github.com/composer/pcre.git', $config->remote());
+        self::assertSame(
+            'https://github.com/composer/pcre.git',
+            $config->remote(),
+        );
         self::assertSame('main', $config->branch());
         self::assertTrue($config->squash());
     }
