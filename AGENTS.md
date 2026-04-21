@@ -200,10 +200,13 @@ Also apply:
 
 ## Git and Commit Guidance
 
+- Commit early and often in small, coherent steps.
 - Make small, coherent commits.
 - Commit messages should be short, clear, and plain English.
 - Do not use unusual prefixes or noisy tags in commit subjects.
 - Preferred commit subject style: lowercase imperative phrase, 3-8 words.
+- Prefer frequent commits after each meaningful green TDD cycle (red -> green -> refactor).
+- Do not batch unrelated changes into a single commit.
 - Good examples:
   - `add subtree config validator`
   - `fix dirty tree detection for pull command`
@@ -213,4 +216,3 @@ Also apply:
 
 - Do not edit `vendor/`.
 - Do not commit generated cache files.
-
