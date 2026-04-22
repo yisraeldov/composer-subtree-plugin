@@ -27,7 +27,7 @@ final class SubtreeTargetResolver
             );
         }
 
-        return [$config->name() => $config];
+        return [$config->prefix() => $config];
     }
 
     private function isAllTarget(?string $target): bool

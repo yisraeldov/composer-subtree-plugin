@@ -21,7 +21,7 @@ final class SubtreeConfigLoader
             $config = $this->toSubtreeConfig($repository);
 
             if ($config !== null) {
-                $configs[$config->name()] = $config;
+                $configs[$config->prefix()] = $config;
             }
         }
 
@@ -45,7 +45,6 @@ final class SubtreeConfigLoader
         }
 
         return new SubtreeConfig(
-            name: $prefix,
             prefix: $prefix,
             remote: $upstream['remote'],
             branch: $upstream['branch'],

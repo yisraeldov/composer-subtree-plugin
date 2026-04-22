@@ -54,7 +54,7 @@ final class SubtreePushCommand extends BaseCommand
             $output->writeln(
                 sprintf(
                     'Successfully pushed subtree %s',
-                    $subtreeConfig->name(),
+                    $subtreeConfig->prefix(),
                 ),
             );
         }

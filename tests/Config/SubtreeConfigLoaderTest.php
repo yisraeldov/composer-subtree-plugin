@@ -53,7 +53,6 @@ final class SubtreeConfigLoaderTest extends TestCase
         self::assertContainsOnlyInstancesOf(SubtreeConfig::class, $configs);
         self::assertFalse($configs['packages/log']->squash());
         self::assertTrue($configs['packages/pcre']->squash());
-        self::assertSame('packages/pcre', $configs['packages/pcre']->name());
         self::assertSame('packages/pcre', $configs['packages/pcre']->prefix());
     }
 

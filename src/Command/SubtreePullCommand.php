@@ -57,7 +57,7 @@ final class SubtreePullCommand extends BaseCommand
             $output->writeln(
                 sprintf(
                     'Successfully pulled subtree %s',
-                    $subtreeConfig->name(),
+                    $subtreeConfig->prefix(),
                 ),
             );
         }

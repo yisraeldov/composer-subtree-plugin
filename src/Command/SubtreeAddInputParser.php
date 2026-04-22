@@ -27,7 +27,6 @@ final class SubtreeAddInputParser
         );
 
         return new SubtreeConfig(
-            name: $prefix,
             prefix: $prefix,
             remote: $upstreamUrl,
             branch: $upstreamBranch,

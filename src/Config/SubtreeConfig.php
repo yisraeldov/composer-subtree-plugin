@@ -7,17 +7,11 @@ namespace ComposerSubtreePlugin\Config;
 final readonly class SubtreeConfig
 {
     public function __construct(
-        private string $name,
         private string $prefix,
         private string $remote,
         private string $branch,
         private bool $squash = false,
     ) {}
-
-    public function name(): string
-    {
-        return $this->name;
-    }
 
     public function prefix(): string
     {

@@ -13,7 +13,6 @@ final class SubtreeGitCommandBuilderTest extends TestCase
     public function testItBuildsEscapedFetchCommand(): void
     {
         $config = new SubtreeConfig(
-            'composer/pcre',
             'packages/pcre',
             'https://github.com/composer/pcre.git',
             'main;echo hacked',
@@ -31,7 +30,6 @@ final class SubtreeGitCommandBuilderTest extends TestCase
     public function testItBuildsEscapedPullCommandWithOptionalSquash(): void
     {
         $config = new SubtreeConfig(
-            'psr/log',
             'packages/log;echo hacked',
             'https://github.com/php-fig/log.git',
             'master',
@@ -50,7 +48,6 @@ final class SubtreeGitCommandBuilderTest extends TestCase
     public function testItBuildsEscapedPushCommand(): void
     {
         $config = new SubtreeConfig(
-            'zeta/subtree',
             'packages/zeta',
             'ssh:example/zeta',
             'main',
