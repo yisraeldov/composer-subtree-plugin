@@ -54,19 +54,19 @@ Legend:
 ## Track B - Core usability and visibility
 
 ### Slice 8 - `composer subtree:status` base output
-- [ ] Add command: `composer subtree:status`.
-- [ ] Show `name`, `package`, `prefix`, `remote`, `branch` for all entries.
-- [ ] DoD: status exposes complete configured map.
+- [x] Add command: `composer subtree:status`.
+- [x] Show `name`, `package`, `prefix`, `remote`, `branch` for all entries.
+- [x] DoD: status exposes complete configured map.
 
 ### Slice 9 - `subtree:status` operational indicators
-- [ ] Indicate dirty state under each subtree prefix.
-- [ ] Indicate whether configured remote appears to exist/reachability check result.
-- [ ] DoD: status quickly shows what is safe to sync.
+- [x] Indicate dirty state under each subtree prefix.
+- [x] Indicate whether configured remote appears to exist/reachability check result.
+- [x] DoD: status quickly shows what is safe to sync.
 
 ### Slice 10 - Help text + examples for MVP commands
-- [ ] Add complete help for `subtree:add`, `subtree:pull`, `subtree:push`, `subtree:status`.
-- [ ] Include copy-paste examples in command descriptions.
-- [ ] DoD: `composer help subtree:*` is actionable.
+- [x] Add complete help for `subtree:add`, `subtree:pull`, `subtree:push`, `subtree:status`.
+- [x] Include copy-paste examples in command descriptions.
+- [x] DoD: `composer help subtree:*` is actionable.
 
 ## Track C - Update hook behavior
 
