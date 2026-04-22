@@ -11,21 +11,21 @@ use PHPUnit\Framework\TestCase;
 
 final class SubtreeTargetConfigProviderTest extends TestCase
 {
-    public function testItResolvesNamedTargetFromPackageConfig(): void
+    public function testItResolvesNamedTargetFromPathRepositoryConfig(): void
     {
         $package = $this->createMock(RootPackageInterface::class);
         $expectedConfig = new SubtreeConfig(
-            'composer/pcre',
-            'composer/pcre',
-            'packages/pcre',
-            'https://github.com/composer/pcre.git',
-            'main',
+            name: 'packages/pcre',
+            package: 'packages/pcre',
+            prefix: 'packages/pcre',
+            remote: 'https://github.com/composer/pcre.git',
+            branch: 'main',
         );
-        $package->method('getExtra')->willReturn([
-            'subtrees' => [
-                'composer/pcre' => [
-                    'package' => 'composer/pcre',
-                    'prefix' => 'packages/pcre',
+        $package->method('getRepositories')->willReturn([
+            [
+                'type' => 'path',
+                'url' => 'packages/pcre',
+                'composer-subtree-plugin' => [
                     'remote' => 'https://github.com/composer/pcre.git',
                     'branch' => 'main',
                     'squash' => false,
@@ -36,8 +36,8 @@ final class SubtreeTargetConfigProviderTest extends TestCase
         $provider = new SubtreeTargetConfigProvider();
 
         self::assertEquals(
-            ['composer/pcre' => $expectedConfig],
-            $provider->resolve($package, 'composer/pcre'),
+            ['packages/pcre' => $expectedConfig],
+            $provider->resolve($package, 'packages/pcre'),
         );
     }
 
@@ -45,30 +45,32 @@ final class SubtreeTargetConfigProviderTest extends TestCase
     {
         $package = $this->createMock(RootPackageInterface::class);
         $alphaConfig = new SubtreeConfig(
-            'alpha/subtree',
-            'alpha/subtree',
-            'packages/alpha',
-            'https://example.com/alpha.git',
-            'main',
+            name: 'packages/alpha',
+            package: 'packages/alpha',
+            prefix: 'packages/alpha',
+            remote: 'https://example.com/alpha.git',
+            branch: 'main',
         );
         $zetaConfig = new SubtreeConfig(
-            'zeta/subtree',
-            'zeta/subtree',
-            'packages/zeta',
-            'https://example.com/zeta.git',
-            'main',
+            name: 'packages/zeta',
+            package: 'packages/zeta',
+            prefix: 'packages/zeta',
+            remote: 'https://example.com/zeta.git',
+            branch: 'main',
         );
-        $package->method('getExtra')->willReturn([
-            'subtrees' => [
-                'zeta/subtree' => [
-                    'package' => 'zeta/subtree',
-                    'prefix' => 'packages/zeta',
+        $package->method('getRepositories')->willReturn([
+            [
+                'type' => 'path',
+                'url' => 'packages/zeta',
+                'composer-subtree-plugin' => [
                     'remote' => 'https://example.com/zeta.git',
                     'branch' => 'main',
                 ],
-                'alpha/subtree' => [
-                    'package' => 'alpha/subtree',
-                    'prefix' => 'packages/alpha',
+            ],
+            [
+                'type' => 'path',
+                'url' => 'packages/alpha',
+                'composer-subtree-plugin' => [
                     'remote' => 'https://example.com/alpha.git',
                     'branch' => 'main',
                 ],
@@ -79,8 +81,8 @@ final class SubtreeTargetConfigProviderTest extends TestCase
 
         self::assertEquals(
             [
-                'alpha/subtree' => $alphaConfig,
-                'zeta/subtree' => $zetaConfig,
+                'packages/alpha' => $alphaConfig,
+                'packages/zeta' => $zetaConfig,
             ],
             $provider->resolve($package, null),
         );

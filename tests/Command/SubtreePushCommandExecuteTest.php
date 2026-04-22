@@ -31,16 +31,18 @@ final class SubtreePushCommandExecuteTest extends TestCase
         $tester = $this->createCommandTester(
             $gitRunner,
             [
-                'composer/pcre' => [
-                    'package' => 'composer/pcre',
-                    'prefix' => 'packages/pcre',
-                    'remote' => 'https://github.com/composer/pcre.git',
-                    'branch' => 'main',
+                [
+                    'type' => 'path',
+                    'url' => 'packages/pcre',
+                    'composer-subtree-plugin' => [
+                        'remote' => 'https://github.com/composer/pcre.git',
+                        'branch' => 'main',
+                    ],
                 ],
             ],
         );
 
-        $tester->execute(['target' => 'composer/pcre']);
+        $tester->execute(['target' => 'packages/pcre']);
 
         self::assertSame(
             [
@@ -60,9 +62,9 @@ final class SubtreePushCommandExecuteTest extends TestCase
         );
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown subtree target: composer/pcre');
+        $this->expectExceptionMessage('Unknown subtree target: packages/pcre');
 
-        $tester->execute(['target' => 'composer/pcre']);
+        $tester->execute(['target' => 'packages/pcre']);
     }
 
     public function testItPushesAllSubtreesWhenTargetIsOmitted(): void
@@ -82,17 +84,21 @@ final class SubtreePushCommandExecuteTest extends TestCase
         $tester = $this->createCommandTester(
             $gitRunner,
             [
-                'zeta/subtree' => [
-                    'package' => 'zeta/subtree',
-                    'prefix' => 'packages/zeta',
-                    'remote' => 'https://example.com/zeta.git',
-                    'branch' => 'main',
+                [
+                    'type' => 'path',
+                    'url' => 'packages/zeta',
+                    'composer-subtree-plugin' => [
+                        'remote' => 'https://example.com/zeta.git',
+                        'branch' => 'main',
+                    ],
                 ],
-                'alpha/subtree' => [
-                    'package' => 'alpha/subtree',
-                    'prefix' => 'packages/alpha',
-                    'remote' => 'https://example.com/alpha.git',
-                    'branch' => 'master',
+                [
+                    'type' => 'path',
+                    'url' => 'packages/alpha',
+                    'composer-subtree-plugin' => [
+                        'remote' => 'https://example.com/alpha.git',
+                        'branch' => 'master',
+                    ],
                 ],
             ],
         );
@@ -128,17 +134,21 @@ final class SubtreePushCommandExecuteTest extends TestCase
         $tester = $this->createCommandTester(
             $gitRunner,
             [
-                'b/subtree' => [
-                    'package' => 'b/subtree',
-                    'prefix' => 'packages/b',
-                    'remote' => 'https://example.com/b.git',
-                    'branch' => 'main',
+                [
+                    'type' => 'path',
+                    'url' => 'packages/b',
+                    'composer-subtree-plugin' => [
+                        'remote' => 'https://example.com/b.git',
+                        'branch' => 'main',
+                    ],
                 ],
-                'a/subtree' => [
-                    'package' => 'a/subtree',
-                    'prefix' => 'packages/a',
-                    'remote' => 'https://example.com/a.git',
-                    'branch' => 'main',
+                [
+                    'type' => 'path',
+                    'url' => 'packages/a',
+                    'composer-subtree-plugin' => [
+                        'remote' => 'https://example.com/a.git',
+                        'branch' => 'main',
+                    ],
                 ],
             ],
         );
@@ -158,15 +168,15 @@ final class SubtreePushCommandExecuteTest extends TestCase
     }
 
     /**
-     * @param array<string, array<string, mixed>> $subtrees
+     * @param array<mixed> $repositories
      */
     private function createCommandTester(
         GitProcessRunner $gitRunner,
-        array $subtrees,
+        array $repositories,
     ): CommandTester {
         $composer = $this->createMock(Composer::class);
         $package = $this->createMock(RootPackageInterface::class);
-        $package->method('getExtra')->willReturn(['subtrees' => $subtrees]);
+        $package->method('getRepositories')->willReturn($repositories);
         $composer->method('getPackage')->willReturn($package);
 
         return new CommandTester(

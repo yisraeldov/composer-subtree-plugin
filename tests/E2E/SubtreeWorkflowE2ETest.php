@@ -638,9 +638,23 @@ final class SubtreeWorkflowE2ETest extends TestCase
      */
     private function createComposerWithSubtrees(array $subtrees): Composer
     {
+        $repositories = array_map(
+            static fn(array $subtree): array => [
+                'type' => 'path',
+                'url' => $subtree['prefix'] ?? '',
+                'composer-subtree-plugin' => [
+                    'remote' => $subtree['remote'] ?? '',
+                    'branch' => $subtree['branch'] ?? '',
+                    'squash' => $subtree['squash'] ?? false,
+                ],
+            ],
+            $subtrees,
+        );
+
         $composer = $this->createMock(Composer::class);
         $package = $this->createMock(RootPackageInterface::class);
         $package->method('getExtra')->willReturn(['subtrees' => $subtrees]);
+        $package->method('getRepositories')->willReturn($repositories);
         $composer->method('getPackage')->willReturn($package);
 
         return $composer;

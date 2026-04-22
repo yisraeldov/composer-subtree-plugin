@@ -8,25 +8,17 @@ use Composer\Package\RootPackageInterface;
 
 final class SubtreeConfigLoader
 {
-    /** @var list<string> */
-    private const REQUIRED_FIELDS = ['package', 'prefix', 'remote', 'branch'];
-
     /**
      * @return array<string, SubtreeConfig>
      */
     public function load(RootPackageInterface $package): array
     {
-        $extra = $package->getExtra();
-        $subtrees = $extra['subtrees'] ?? null;
-
-        if (!is_array($subtrees)) {
-            return [];
-        }
+        $repositories = $package->getRepositories();
 
         $configs = [];
 
-        foreach ($subtrees as $name => $subtree) {
-            $config = $this->toSubtreeConfig($name, $subtree);
+        foreach ($repositories as $repository) {
+            $config = $this->toSubtreeConfig($repository);
 
             if ($config !== null) {
                 $configs[$config->name()] = $config;
@@ -36,58 +28,101 @@ final class SubtreeConfigLoader
         return $configs;
     }
 
-    private function toSubtreeConfig(
-        mixed $name,
-        mixed $subtree,
-    ): ?SubtreeConfig {
-        if (!is_string($name) || !is_array($subtree)) {
+    private function toSubtreeConfig(mixed $repository): ?SubtreeConfig
+    {
+        $pathRepository = $this->asPathRepository($repository);
+
+        if ($pathRepository === null) {
             return null;
         }
 
-        $fields = $this->extractRequiredFields($subtree);
+        $prefix = $this->extractPrefix($pathRepository);
+        $metadata = $this->extractSubtreeMetadata($pathRepository);
+        $upstream = $this->extractUpstream($metadata);
 
-        if ($fields === null) {
+        if ($prefix === null || $metadata === null || $upstream === null) {
             return null;
         }
 
         return new SubtreeConfig(
-            name: $name,
-            package: $fields['package'],
-            prefix: $fields['prefix'],
-            remote: $fields['remote'],
-            branch: $fields['branch'],
-            squash: $this->parseSquash($subtree),
+            name: $prefix,
+            package: $prefix,
+            prefix: $prefix,
+            remote: $upstream['remote'],
+            branch: $upstream['branch'],
+            squash: $this->parseSquash($metadata),
         );
     }
 
     /**
-     * @param array<mixed> $subtree
-     *
-     * @return array<string, string>|null
+     * @param array<mixed> $repository
      */
-    private function extractRequiredFields(array $subtree): ?array
+    private function isPathRepository(array $repository): bool
     {
-        $fields = [];
-
-        foreach (self::REQUIRED_FIELDS as $field) {
-            $value = $subtree[$field] ?? null;
-
-            if (!is_string($value)) {
-                return null;
-            }
-
-            $fields[$field] = $value;
-        }
-
-        return $fields;
+        return ($repository['type'] ?? null) === 'path';
     }
 
     /**
-     * @param array<mixed> $subtree
+     * @return array<mixed>|null
      */
-    private function parseSquash(array $subtree): bool
+    private function asPathRepository(mixed $repository): ?array
     {
-        $squash = $subtree['squash'] ?? false;
+        if (!is_array($repository) || !$this->isPathRepository($repository)) {
+            return null;
+        }
+
+        return $repository;
+    }
+
+    /**
+     * @param array<mixed> $repository
+     */
+    private function extractPrefix(array $repository): ?string
+    {
+        $prefix = $repository['url'] ?? null;
+
+        return is_string($prefix) ? $prefix : null;
+    }
+
+    /**
+     * @param array<mixed> $repository
+     *
+     * @return array<mixed>|null
+     */
+    private function extractSubtreeMetadata(array $repository): ?array
+    {
+        $metadata = $repository['composer-subtree-plugin'] ?? null;
+
+        return is_array($metadata) ? $metadata : null;
+    }
+
+    /**
+     * @param array<mixed>|null $metadata
+     *
+     * @return array{remote: string, branch: string}|null
+     */
+    private function extractUpstream(?array $metadata): ?array
+    {
+        if ($metadata === null) {
+            return null;
+        }
+
+        $remote = $metadata['remote'] ?? null;
+        $branch = $metadata['branch'] ?? null;
+
+        if (!is_string($remote) || !is_string($branch)) {
+            return null;
+        }
+
+        return ['remote' => $remote, 'branch' => $branch];
+    }
+
+    /**
+     * @param array<mixed> $metadata
+     */
+    private function parseSquash(array $metadata): bool
+    {
+        $squash = $metadata['squash'] ?? false;
 
         return is_bool($squash) ? $squash : false;
     }

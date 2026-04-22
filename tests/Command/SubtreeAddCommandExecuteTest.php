@@ -23,7 +23,8 @@ final class SubtreeAddCommandExecuteTest extends TestCase
         . "'https://github.com/composer/pcre' 'main'";
     private const ADD_SCP_HOOPLA
         = "git subtree add --prefix='packages/hoopla-payroll' "
-        . "'git@github.com:Behavior-Analyst-Professional-Services/hoopla-payroll.git' 'master' --squash";
+        . "'git@github.com:Behavior-Analyst-Professional-Services"
+        . "/hoopla-payroll.git' 'master' --squash";
 
     public function testItDefaultsPrefixToPackagesRepoName(): void
     {
@@ -371,7 +372,8 @@ final class SubtreeAddCommandExecuteTest extends TestCase
 
         $tester->execute([
             'upstream-url'
-                => 'git@github.com:Behavior-Analyst-Professional-Services/hoopla-payroll.git',
+                => 'git@github.com:Behavior-Analyst-Professional-Services'
+                . '/hoopla-payroll.git',
             'upstream-branch' => 'master',
             'prefix' => 'packages/hoopla-payroll',
             '--squash' => true,
@@ -385,7 +387,8 @@ final class SubtreeAddCommandExecuteTest extends TestCase
                     => 'Behavior-Analyst-Professional-Services/hoopla-payroll',
                 'prefix' => 'packages/hoopla-payroll',
                 'remote'
-                    => 'git@github.com:Behavior-Analyst-Professional-Services/hoopla-payroll.git',
+                    => 'git@github.com:Behavior-Analyst-Professional-Services'
+                    . '/hoopla-payroll.git',
                 'branch' => 'master',
                 'squash' => true,
             ],

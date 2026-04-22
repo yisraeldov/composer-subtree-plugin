@@ -22,7 +22,8 @@ final class SubtreeCommandProvider implements CommandProvider
 
         if (!$composer instanceof Composer) {
             throw new \InvalidArgumentException(
-                'Command provider requires a Composer instance in capability args.',
+                'Command provider requires a Composer '
+                . 'instance in capability args.',
             );
         }
 
