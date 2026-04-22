@@ -6,14 +6,15 @@ namespace ComposerSubtreePlugin\Tests\Command;
 
 use Composer\Composer;
 use ComposerSubtreePlugin\Command\SubtreeAddCommand;
-use ComposerSubtreePlugin\Command\SubtreePushCommand;
 use ComposerSubtreePlugin\Command\SubtreePullCommand;
 use ComposerSubtreePlugin\Command\SubtreeCommandProvider;
+use ComposerSubtreePlugin\Command\SubtreePushCommand;
+use ComposerSubtreePlugin\Command\SubtreeStatusCommand;
 use PHPUnit\Framework\TestCase;
 
 final class SubtreeCommandProviderTest extends TestCase
 {
-    public function testItProvidesSubtreeAddPullAndPushCommands(): void
+    public function testItProvidesSubtreeAddPullPushAndStatusCommands(): void
     {
         $composer = $this->createMock(Composer::class);
         $provider = new SubtreeCommandProvider([
@@ -22,10 +23,11 @@ final class SubtreeCommandProviderTest extends TestCase
 
         $commands = $provider->getCommands();
 
-        self::assertCount(3, $commands);
+        self::assertCount(4, $commands);
         self::assertInstanceOf(SubtreeAddCommand::class, $commands[0]);
         self::assertInstanceOf(SubtreePullCommand::class, $commands[1]);
         self::assertInstanceOf(SubtreePushCommand::class, $commands[2]);
+        self::assertInstanceOf(SubtreeStatusCommand::class, $commands[3]);
     }
 
     public function testItRejectsMissingComposerCapabilityArgument(): void
