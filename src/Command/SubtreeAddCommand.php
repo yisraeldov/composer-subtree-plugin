@@ -64,7 +64,6 @@ final class SubtreeAddCommand extends BaseCommand
         OutputInterface $output,
     ): int {
         $subtreeConfig = $this->inputParser()->parse($input);
-        $this->assertSupportedSubtreeKey($subtreeConfig->name());
         $gitCommand = $this->buildGitSubtreeAddCommand($subtreeConfig);
 
         $output->writeln('Running: ' . $gitCommand);
@@ -85,15 +84,6 @@ final class SubtreeAddCommand extends BaseCommand
         return $this->commandBuilder()->add($config);
     }
 
-    private function assertSupportedSubtreeKey(string $key): void
-    {
-        if (str_contains($key, '.')) {
-            throw new \InvalidArgumentException(
-                'Subtree key cannot contain dots. Use a key without ".".',
-            );
-        }
-    }
-
     private function persistSubtreeConfig(SubtreeConfig $config): void
     {
         $jsonFile = new JsonFile($this->resolveComposerJsonPath());
@@ -105,34 +95,16 @@ final class SubtreeAddCommand extends BaseCommand
             );
         }
 
-        $extra = $this->normalizeMap($manifest['extra'] ?? []);
-        $subtrees = $this->normalizeMap($extra['subtrees'] ?? []);
-
-        $subtrees[$config->name()] = $this->createSubtreeConfigEntry($config);
-
-        $extra['subtrees'] = $subtrees;
-        $manifest['extra'] = $extra;
         $manifest['repositories'] = $this->repositoriesConfigUpdater()
-            ->ensurePathRepository(
+            ->upsertSubtreeMetadata(
                 $manifest['repositories'] ?? [],
                 $config->prefix(),
+                $config->remote(),
+                $config->branch(),
+                $config->squash(),
             );
 
         $jsonFile->write($manifest);
-    }
-
-    /**
-     * @return array<string, string|bool>
-     */
-    private function createSubtreeConfigEntry(SubtreeConfig $config): array
-    {
-        return [
-            'package' => $config->package(),
-            'prefix' => $config->prefix(),
-            'remote' => $config->remote(),
-            'branch' => $config->branch(),
-            'squash' => $config->squash(),
-        ];
     }
 
     private function repositoriesConfigUpdater(): RepositoriesConfigUpdater
@@ -150,30 +122,6 @@ final class SubtreeAddCommand extends BaseCommand
         }
 
         return Factory::getComposerFile();
-    }
-
-    /**
-     * @param mixed $value
-     *
-     * @return array<string, mixed>
-     */
-    private function normalizeMap(mixed $value): array
-    {
-        if (!is_array($value)) {
-            return [];
-        }
-
-        $map = [];
-
-        foreach ($value as $key => $entry) {
-            if (!is_string($key)) {
-                continue;
-            }
-
-            $map[$key] = $entry;
-        }
-
-        return $map;
     }
 
     private function inputParser(): SubtreeAddInputParser

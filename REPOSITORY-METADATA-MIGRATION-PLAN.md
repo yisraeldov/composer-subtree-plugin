@@ -91,7 +91,7 @@ Primary expected edits:
 - `tests/Command/SubtreePullCommandExecuteTest.php`
 - `tests/Command/SubtreePushCommandExecuteTest.php`
 
-### Phase 3 - `subtree:add` write model migration [pending]
+### Phase 3 - `subtree:add` write model migration [done]
 
 1. Add failing tests for manifest updates:
    - ensure a matching `type=path` repo entry exists for prefix,

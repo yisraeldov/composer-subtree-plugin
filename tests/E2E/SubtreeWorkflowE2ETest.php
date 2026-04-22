@@ -98,9 +98,11 @@ final class SubtreeWorkflowE2ETest extends TestCase
                 $composerJsonPath,
             );
             self::assertCount(1, $subtrees);
-            self::assertContains(
-                ['type' => 'path', 'url' => 'packages/library'],
-                $this->readRepositoriesFromComposerManifest($composerJsonPath),
+            self::assertArrayHasKey('packages/library', $subtrees);
+            self::assertContainsOnly('array', $subtrees);
+            self::assertSame(
+                $remotePath,
+                $subtrees['packages/library']['remote'] ?? null,
             );
 
             $this->runGitCommand('git add .', $consumerPath);
@@ -527,28 +529,14 @@ final class SubtreeWorkflowE2ETest extends TestCase
     private function readSubtreesFromComposerManifest(
         string $composerJsonPath,
     ): array {
-        $contents = file_get_contents($composerJsonPath);
-
-        self::assertIsString($contents);
-
-        $decoded = json_decode($contents, true);
-
-        self::assertIsArray($decoded);
-
-        $extra = $decoded['extra'] ?? null;
-        self::assertIsArray($extra);
-
-        $subtrees = $extra['subtrees'] ?? null;
-        self::assertIsArray($subtrees);
+        $repositories = $this->readRepositoriesFromComposerManifest(
+            $composerJsonPath,
+        );
 
         return array_reduce(
-            array_keys($subtrees),
-            fn(array $carry, mixed $key): array
-                => $this->appendSubtreeConfiguration(
-                    $carry,
-                    $subtrees,
-                    $key,
-                ),
+            $repositories,
+            fn(array $carry, array $repository): array
+                => $this->appendSubtreeConfiguration($carry, $repository),
             [],
         );
     }
@@ -589,28 +577,93 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
     /**
      * @param array<string, array<string, mixed>> $carry
-     * @param array<mixed> $subtrees
+     * @param array<string, mixed> $repository
      *
      * @return array<string, array<string, mixed>>
      */
     private function appendSubtreeConfiguration(
         array $carry,
-        array $subtrees,
-        mixed $key,
+        array $repository,
     ): array {
-        if (!is_string($key)) {
+        $subtree = $this->extractSubtreeConfiguration($repository);
+
+        if ($subtree === null) {
             return $carry;
         }
 
-        $value = $subtrees[$key] ?? null;
-
-        if (!is_array($value)) {
-            return $carry;
-        }
-
-        $carry[$key] = $this->normalizeSubtreeEntry($value);
+        $carry[$subtree['prefix']] = $subtree;
 
         return $carry;
+    }
+
+    /**
+     * @param array<string, mixed> $repository
+     *
+     * @return array{prefix: string, remote: mixed,
+     *   branch: mixed, squash: mixed}|null
+     */
+    private function extractSubtreeConfiguration(array $repository): ?array
+    {
+        if (!$this->isPathRepository($repository)) {
+            return null;
+        }
+
+        $prefix = $this->extractRepositoryPrefix($repository);
+        $metadata = $this->extractRepositoryMetadata($repository);
+
+        if ($prefix === null || $metadata === null) {
+            return null;
+        }
+
+        return $this->normalizeSubtreeMetadata($prefix, $metadata);
+    }
+
+    /**
+     * @param array<string, mixed> $repository
+     */
+    private function isPathRepository(array $repository): bool
+    {
+        return ($repository['type'] ?? null) === 'path';
+    }
+
+    /**
+     * @param array<string, mixed> $repository
+     */
+    private function extractRepositoryPrefix(array $repository): ?string
+    {
+        $prefix = $repository['url'] ?? null;
+
+        return is_string($prefix) ? $prefix : null;
+    }
+
+    /**
+     * @param array<string, mixed> $repository
+     *
+     * @return array<mixed>|null
+     */
+    private function extractRepositoryMetadata(array $repository): ?array
+    {
+        $metadata = $repository['composer-subtree-plugin'] ?? null;
+
+        return is_array($metadata) ? $metadata : null;
+    }
+
+    /**
+     * @param array<mixed> $metadata
+     *
+     * @return array{prefix: string, remote: mixed,
+     *   branch: mixed, squash: mixed}
+     */
+    private function normalizeSubtreeMetadata(
+        string $prefix,
+        array $metadata,
+    ): array {
+        return [
+            'prefix' => $prefix,
+            'remote' => $metadata['remote'] ?? null,
+            'branch' => $metadata['branch'] ?? null,
+            'squash' => $metadata['squash'] ?? false,
+        ];
     }
 
     /**
