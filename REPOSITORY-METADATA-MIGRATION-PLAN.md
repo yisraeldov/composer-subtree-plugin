@@ -58,7 +58,7 @@ be implemented.
 
 ## Implementation Sequence (Strict TDD)
 
-### Phase 1 - Config read model migration
+### Phase 1 - Config read model migration [done]
 
 1. Add failing tests for reading subtree targets from `repositories`:
    - include only `type=path` entries with `composer-subtree-plugin` object,
@@ -75,7 +75,7 @@ Primary expected edits:
 - `tests/Config/SubtreeConfigLoaderTest.php`
 - `tests/Config/SubtreeTargetConfigProviderTest.php`
 
-### Phase 2 - Command target resolution migration
+### Phase 2 - Command target resolution migration [done]
 
 1. Add failing command tests proving pull/push resolve targets from repository
    metadata only.
@@ -91,7 +91,7 @@ Primary expected edits:
 - `tests/Command/SubtreePullCommandExecuteTest.php`
 - `tests/Command/SubtreePushCommandExecuteTest.php`
 
-### Phase 3 - `subtree:add` write model migration
+### Phase 3 - `subtree:add` write model migration [pending]
 
 1. Add failing tests for manifest updates:
    - ensure a matching `type=path` repo entry exists for prefix,
@@ -106,7 +106,7 @@ Primary expected edits:
 - `tests/Command/SubtreeAddCommandExecuteTest.php`
 - `tests/E2E/SubtreeWorkflowE2ETest.php`
 
-### Phase 4 - Cleanup and consistency
+### Phase 4 - Cleanup and consistency [pending]
 
 1. Remove obsolete assumptions and dead code tied to `extra.subtrees`.
 2. Update command help text to reflect repository metadata source.

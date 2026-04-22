@@ -36,7 +36,7 @@ final class SubtreePullCommand extends BaseCommand
             ->addArgument(
                 'target',
                 InputArgument::OPTIONAL,
-                'Subtree name or all',
+                'Subtree path target or all',
             );
     }
 

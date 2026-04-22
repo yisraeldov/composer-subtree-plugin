@@ -31,5 +31,9 @@ final class SubtreePushCommandTest extends TestCase
 
         self::assertTrue($definition->hasArgument('target'));
         self::assertFalse($definition->getArgument('target')->isRequired());
+        self::assertSame(
+            'Subtree path target or all',
+            $definition->getArgument('target')->getDescription(),
+        );
     }
 }
