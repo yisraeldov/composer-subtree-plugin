@@ -4,15 +4,7 @@ declare(strict_types=1);
 
 namespace ComposerSubtreePlugin\Tests\E2E;
 
-use Composer\Composer;
-use Composer\Package\RootPackageInterface;
-use ComposerSubtreePlugin\Command\SubtreeAddCommand;
-use ComposerSubtreePlugin\Command\SubtreePullCommand;
-use ComposerSubtreePlugin\Command\SubtreePushCommand;
-use ComposerSubtreePlugin\Git\GitProcessRunner;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Process\Process;
 
 final class SubtreeWorkflowE2ETest extends TestCase
@@ -44,9 +36,7 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
     public function testAddPullPushWorkflowInIsolatedRepos(): void
     {
-        if (!$this->isGitSubtreeAvailable()) {
-            self::markTestSkipped('git subtree is not available in PATH.');
-        }
+        $this->requireComposerAndSubtreeTools();
 
         $sandbox = $this->createSandboxDirectory();
 
@@ -57,33 +47,37 @@ final class SubtreeWorkflowE2ETest extends TestCase
             $consumerPath = $sandbox . '/consumer';
             $verifyPath = $sandbox . '/verify';
             $composerJsonPath = $consumerPath . '/composer.json';
+            $pluginPath = dirname($this->projectComposerPath);
 
             $this->initializeRemoteWithSeedCommit($remotePath, $seedPath);
             $this->initializeConsumerRepository(
                 $consumerPath,
                 $composerJsonPath,
+                $pluginPath,
             );
 
-            $addStatus = $this->runInDirectory(
+            $this->runComposerCommand(
+                'composer install --no-interaction --no-progress',
                 $consumerPath,
-                function () use ($composerJsonPath, $remotePath): int {
-                    $tester = new CommandTester(
-                        new SubtreeAddCommand(
-                            $this->createComposerWithSubtrees([]),
-                            new GitProcessRunner(),
-                            $composerJsonPath,
-                        ),
-                    );
-
-                    return $tester->execute([
-                        'upstream-url' => $remotePath,
-                        'upstream-branch' => 'main',
-                        'prefix' => 'packages/library',
-                    ]);
-                },
+            );
+            $listProcess = $this->runComposerCommand(
+                'composer list --raw',
+                $consumerPath,
+            );
+            self::assertStringContainsString(
+                'subtree:add',
+                $listProcess->getOutput(),
             );
 
-            self::assertSame(Command::SUCCESS, $addStatus);
+            $this->runComposerCommand(
+                sprintf(
+                    'composer --no-interaction subtree:add %s '
+                    . 'main packages/library',
+                    escapeshellarg($remotePath),
+                ),
+                $consumerPath,
+            );
+
             self::assertFileExists(
                 $consumerPath . '/packages/library/upstream.txt',
             );
@@ -113,21 +107,11 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
             $this->addUpstreamCommit($remotePath, $maintainerPath);
 
-            $pullStatus = $this->runInDirectory(
+            $this->runComposerCommand(
+                'composer --no-interaction subtree:pull all',
                 $consumerPath,
-                function () use ($subtrees): int {
-                    $tester = new CommandTester(
-                        new SubtreePullCommand(
-                            $this->createComposerWithSubtrees($subtrees),
-                            new GitProcessRunner(),
-                        ),
-                    );
-
-                    return $tester->execute(['target' => 'all']);
-                },
             );
 
-            self::assertSame(Command::SUCCESS, $pullStatus);
             self::assertSame(
                 "v2\n",
                 file_get_contents(
@@ -148,21 +132,10 @@ final class SubtreeWorkflowE2ETest extends TestCase
                 $consumerPath,
             );
 
-            $pushStatus = $this->runInDirectory(
+            $this->runComposerCommand(
+                'composer --no-interaction subtree:push all',
                 $consumerPath,
-                function () use ($subtrees): int {
-                    $tester = new CommandTester(
-                        new SubtreePushCommand(
-                            $this->createComposerWithSubtrees($subtrees),
-                            new GitProcessRunner(),
-                        ),
-                    );
-
-                    return $tester->execute(['target' => 'all']);
-                },
             );
-
-            self::assertSame(Command::SUCCESS, $pushStatus);
 
             $this->runGitCommand(
                 sprintf(
@@ -185,15 +158,11 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
     public function testGitHubSmokeAddAndPullWhenEnabled(): void
     {
-        if (getenv('SUBTREE_GITHUB_SMOKE') !== '1') {
-            self::markTestSkipped(
-                'Set SUBTREE_GITHUB_SMOKE=1 to run GitHub smoke test.',
-            );
-        }
-
-        if (!$this->isGitSubtreeAvailable()) {
-            self::markTestSkipped('git subtree is not available in PATH.');
-        }
+        $this->requireComposerAndSubtreeTools();
+        $this->requireSmokeFlag(
+            'SUBTREE_GITHUB_SMOKE',
+            'Set SUBTREE_GITHUB_SMOKE=1 to run GitHub smoke test.',
+        );
 
         $remote = getenv('SUBTREE_GITHUB_REMOTE');
         $branch = getenv('SUBTREE_GITHUB_BRANCH');
@@ -202,6 +171,7 @@ final class SubtreeWorkflowE2ETest extends TestCase
         try {
             $consumerPath = $sandbox . '/consumer';
             $composerJsonPath = $consumerPath . '/composer.json';
+            $pluginPath = dirname($this->projectComposerPath);
             $upstreamRemote = is_string($remote) && $remote !== ''
                 ? $remote
                 : 'https://github.com/composer/pcre.git';
@@ -212,55 +182,31 @@ final class SubtreeWorkflowE2ETest extends TestCase
             $this->initializeConsumerRepository(
                 $consumerPath,
                 $composerJsonPath,
+                $pluginPath,
             );
 
-            $addStatus = $this->runInDirectory(
+            $this->runComposerCommand(
+                'composer install --no-interaction --no-progress',
                 $consumerPath,
-                function () use (
-                    $composerJsonPath,
-                    $upstreamRemote,
-                    $upstreamBranch,
-                ): int {
-                    $tester = new CommandTester(
-                        new SubtreeAddCommand(
-                            $this->createComposerWithSubtrees([]),
-                            new GitProcessRunner(),
-                            $composerJsonPath,
-                        ),
-                    );
-
-                    return $tester->execute([
-                        'upstream-url' => $upstreamRemote,
-                        'upstream-branch' => $upstreamBranch,
-                        'prefix' => 'packages/pcre',
-                    ]);
-                },
             );
 
-            self::assertSame(Command::SUCCESS, $addStatus);
+            $this->runComposerCommand(
+                sprintf(
+                    'composer --no-interaction subtree:add %s %s packages/pcre',
+                    escapeshellarg($upstreamRemote),
+                    escapeshellarg($upstreamBranch),
+                ),
+                $consumerPath,
+            );
+
             self::assertFileExists(
                 $consumerPath . '/packages/pcre/composer.json',
             );
 
-            $subtrees = $this->readSubtreesFromComposerManifest(
-                $composerJsonPath,
-            );
-
-            $pullStatus = $this->runInDirectory(
+            $this->runComposerCommand(
+                'composer --no-interaction subtree:pull all',
                 $consumerPath,
-                function () use ($subtrees): int {
-                    $tester = new CommandTester(
-                        new SubtreePullCommand(
-                            $this->createComposerWithSubtrees($subtrees),
-                            new GitProcessRunner(),
-                        ),
-                    );
-
-                    return $tester->execute(['target' => 'all']);
-                },
             );
-
-            self::assertSame(Command::SUCCESS, $pullStatus);
         } finally {
             $this->removeDirectoryRecursively($sandbox);
         }
@@ -268,33 +214,13 @@ final class SubtreeWorkflowE2ETest extends TestCase
 
     public function testGitHubSmokePushWhenEnabled(): void
     {
-        if (getenv('SUBTREE_GITHUB_PUSH_SMOKE') !== '1') {
-            self::markTestSkipped(
-                'Set SUBTREE_GITHUB_PUSH_SMOKE=1 '
-                . 'to run GitHub push smoke test.',
-            );
-        }
+        $this->requireComposerAndSubtreeTools();
+        $this->requireSmokeFlag(
+            'SUBTREE_GITHUB_PUSH_SMOKE',
+            'Set SUBTREE_GITHUB_PUSH_SMOKE=1 to run GitHub push smoke test.',
+        );
 
-        if (!$this->isGitSubtreeAvailable()) {
-            self::markTestSkipped(
-                'git subtree is not available in PATH.',
-            );
-        }
-
-        $remote = getenv('SUBTREE_GITHUB_REMOTE');
-        $branch = getenv('SUBTREE_GITHUB_BRANCH');
-
-        if (!is_string($remote) || $remote === '') {
-            self::markTestSkipped(
-                'SUBTREE_GITHUB_REMOTE must be set for push smoke test.',
-            );
-        }
-
-        if (!is_string($branch) || $branch === '') {
-            self::markTestSkipped(
-                'SUBTREE_GITHUB_BRANCH must be set for push smoke test.',
-            );
-        }
+        [$remote, $branch] = $this->requireGithubPushRemoteAndBranch();
 
         $sandbox = $this->createSandboxDirectory();
 
@@ -302,32 +228,28 @@ final class SubtreeWorkflowE2ETest extends TestCase
             $consumerPath = $sandbox . '/consumer';
             $verifyPath = $sandbox . '/verify';
             $composerJsonPath = $consumerPath . '/composer.json';
+            $pluginPath = dirname($this->projectComposerPath);
 
             $this->initializeConsumerRepository(
                 $consumerPath,
                 $composerJsonPath,
+                $pluginPath,
             );
 
-            $addStatus = $this->runInDirectory(
+            $this->runComposerCommand(
+                'composer install --no-interaction --no-progress',
                 $consumerPath,
-                function () use ($composerJsonPath, $remote, $branch): int {
-                    $tester = new CommandTester(
-                        new SubtreeAddCommand(
-                            $this->createComposerWithSubtrees([]),
-                            new GitProcessRunner(),
-                            $composerJsonPath,
-                        ),
-                    );
-
-                    return $tester->execute([
-                        'upstream-url' => $remote,
-                        'upstream-branch' => $branch,
-                        'prefix' => 'packages/smoke-push',
-                    ]);
-                },
             );
 
-            self::assertSame(Command::SUCCESS, $addStatus);
+            $this->runComposerCommand(
+                sprintf(
+                    'composer --no-interaction subtree:add %s %s '
+                    . 'packages/smoke-push',
+                    escapeshellarg($remote),
+                    escapeshellarg($branch),
+                ),
+                $consumerPath,
+            );
 
             $subtrees = $this->readSubtreesFromComposerManifest(
                 $composerJsonPath,
@@ -352,21 +274,10 @@ final class SubtreeWorkflowE2ETest extends TestCase
                 $consumerPath,
             );
 
-            $pushStatus = $this->runInDirectory(
+            $this->runComposerCommand(
+                'composer --no-interaction subtree:push all',
                 $consumerPath,
-                function () use ($subtrees): int {
-                    $tester = new CommandTester(
-                        new SubtreePushCommand(
-                            $this->createComposerWithSubtrees($subtrees),
-                            new GitProcessRunner(),
-                        ),
-                    );
-
-                    return $tester->execute(['target' => 'all']);
-                },
             );
-
-            self::assertSame(Command::SUCCESS, $pushStatus);
 
             $this->runGitCommand(
                 sprintf(
@@ -421,6 +332,7 @@ final class SubtreeWorkflowE2ETest extends TestCase
     private function initializeConsumerRepository(
         string $consumerPath,
         string $composerJsonPath,
+        string $pluginPath,
     ): void {
         mkdir($consumerPath, 0777, true);
 
@@ -433,7 +345,24 @@ final class SubtreeWorkflowE2ETest extends TestCase
             json_encode(
                 [
                     'name' => 'acme/consumer',
-                    'extra' => ['subtrees' => []],
+                    'repositories' => [
+                        ['packagist.org' => false],
+                        [
+                            'type' => 'path',
+                            'url' => $pluginPath,
+                            'options' => ['symlink' => true],
+                        ],
+                    ],
+                    'require-dev' => [
+                        'yisraeldov/composer-subtree-plugin' => '*',
+                    ],
+                    'minimum-stability' => 'dev',
+                    'prefer-stable' => true,
+                    'config' => [
+                        'allow-plugins' => [
+                            'yisraeldov/composer-subtree-plugin' => true,
+                        ],
+                    ],
                 ],
                 JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
             ) . "\n",
@@ -479,22 +408,85 @@ final class SubtreeWorkflowE2ETest extends TestCase
         );
     }
 
-    /**
-     * @param callable(): int $callback
-     */
-    private function runInDirectory(string $directory, callable $callback): int
-    {
-        $originalWorkingDirectory = getcwd();
+    private function runComposerCommand(
+        string $command,
+        string $workingDirectory,
+    ): Process {
+        $process = Process::fromShellCommandline($command, $workingDirectory);
+        $process->setTimeout(300);
+        $process->run();
 
-        self::assertIsString($originalWorkingDirectory);
-
-        chdir($directory);
-
-        try {
-            return $callback();
-        } finally {
-            chdir($originalWorkingDirectory);
+        if ($process->isSuccessful()) {
+            return $process;
         }
+
+        self::fail(
+            sprintf(
+                "Composer command failed:\n"
+                . "command: %s\n"
+                . "cwd: %s\n"
+                . "stdout: %s\n"
+                . "stderr: %s",
+                $command,
+                $workingDirectory,
+                $process->getOutput(),
+                $process->getErrorOutput(),
+            ),
+        );
+    }
+
+    private function isComposerAvailable(): bool
+    {
+        $process = Process::fromShellCommandline('composer --version');
+        $process->setTimeout(30);
+        $process->run();
+
+        return $process->isSuccessful();
+    }
+
+    private function requireComposerAndSubtreeTools(): void
+    {
+        if (!$this->isComposerAvailable()) {
+            self::markTestSkipped('composer is not available in PATH.');
+        }
+
+        if (!$this->isGitSubtreeAvailable()) {
+            self::markTestSkipped('git subtree is not available in PATH.');
+        }
+    }
+
+    private function requireSmokeFlag(
+        string $flag,
+        string $message,
+    ): void {
+        if (getenv($flag) === '1') {
+            return;
+        }
+
+        self::markTestSkipped($message);
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function requireGithubPushRemoteAndBranch(): array
+    {
+        $remote = getenv('SUBTREE_GITHUB_REMOTE');
+        $branch = getenv('SUBTREE_GITHUB_BRANCH');
+
+        if (!is_string($remote) || $remote === '') {
+            self::markTestSkipped(
+                'SUBTREE_GITHUB_REMOTE must be set for push smoke test.',
+            );
+        }
+
+        if (!is_string($branch) || $branch === '') {
+            self::markTestSkipped(
+                'SUBTREE_GITHUB_BRANCH must be set for push smoke test.',
+            );
+        }
+
+        return [$remote, $branch];
     }
 
     private function runGitCommand(
@@ -684,33 +676,6 @@ final class SubtreeWorkflowE2ETest extends TestCase
         }
 
         return $normalized;
-    }
-
-    /**
-     * @param array<string, array<string, mixed>> $subtrees
-     */
-    private function createComposerWithSubtrees(array $subtrees): Composer
-    {
-        $repositories = array_map(
-            static fn(array $subtree): array => [
-                'type' => 'path',
-                'url' => $subtree['prefix'] ?? '',
-                'composer-subtree-plugin' => [
-                    'remote' => $subtree['remote'] ?? '',
-                    'branch' => $subtree['branch'] ?? '',
-                    'squash' => $subtree['squash'] ?? false,
-                ],
-            ],
-            $subtrees,
-        );
-
-        $composer = $this->createMock(Composer::class);
-        $package = $this->createMock(RootPackageInterface::class);
-        $package->method('getExtra')->willReturn(['subtrees' => $subtrees]);
-        $package->method('getRepositories')->willReturn($repositories);
-        $composer->method('getPackage')->willReturn($package);
-
-        return $composer;
     }
 
     private function isGitSubtreeAvailable(): bool
