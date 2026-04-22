@@ -14,10 +14,10 @@ Legend:
 - [x] DoD: plugin installs and activates without errors.
 
 ### Slice 2 - Minimal subtree config loader (happy path)
-- [x] Read `extra.subtrees` from root `composer.json`.
-- [x] Map entries to minimal runtime config (`name`, `package`, `prefix`, `remote`, `branch`, `squash`).
-- [x] Default `squash=false` when omitted.
-- [x] DoD: commands can resolve configured subtrees from config.
+- [ ] Read root `composer.json.repositories` and select entries where `type=path` and `composer-subtree-plugin` exists.
+- [ ] Map entries to minimal runtime config (`name`, `prefix`, `remote`, `branch`, `squash`).
+- [ ] Default `squash=false` when omitted.
+- [ ] DoD: commands can resolve configured subtrees from repository metadata.
 
 ### Slice 3 - Git execution baseline
 - [x] Implement `GitProcessRunner` for command execution + exit code capture.
@@ -25,13 +25,13 @@ Legend:
 - [x] DoD: all git calls use one runner with consistent failures.
 
 ### Slice 4 - `composer subtree:add` (MVP)
-- [x] Add command: `composer subtree:add <upstream-url> <upstream-branch> [prefix] [--squash]`.
-- [x] Default prefix to `packages/<repo-name>` when omitted.
-- [x] Default `squash=false`.
-- [x] Update `composer.json` by appending a subtree entry under `extra.subtrees`.
-- [x] Persist full subtree config fields in `composer.json`: `package`, `prefix`, `remote`, `branch`, `squash`.
-- [x] Run `git subtree add --prefix=<prefix> <remote> <branch>` (with squash flag when set).
-- [x] DoD: one command adds config entry + performs initial subtree add.
+- [ ] Add command: `composer subtree:add <upstream-url> <upstream-branch> [prefix] [--squash]`.
+- [ ] Default prefix to `packages/<repo-name>` when omitted.
+- [ ] Default `squash=false`.
+- [ ] Ensure `composer.json.repositories` contains a `type=path` entry for the subtree prefix.
+- [ ] Persist subtree metadata in the path repository entry under `composer-subtree-plugin`: `remote`, `branch`, `squash`.
+- [ ] Run `git subtree add --prefix=<prefix> <remote> <branch>` (with squash flag when set).
+- [ ] DoD: one command adds config entry + performs initial subtree add.
 
 ### Slice 5 - `composer subtree:pull` single target (MVP)
 - [x] Add command: `composer subtree:pull [name|all]`.
@@ -77,14 +77,15 @@ Legend:
 
 ### Slice 12 - Package targeting in update hook
 - [ ] Parse requested package args for `composer update <packages...>`.
-- [ ] Match requested packages against configured subtree `package` values.
+- [ ] Resolve requested package install paths.
+- [ ] Match package paths against `repositories` entries of `type=path` that include `composer-subtree-plugin` metadata.
 - [ ] Do nothing for bare `composer update` (no package args).
 - [ ] DoD: hook decides exactly when pre-pull should run.
 
 ### Slice 13 - Pre-pull execution before solver
-- [ ] On matching package(s), run subtree pull before normal update continues.
+- [ ] On matching path-subtree package(s), run subtree pull before normal update continues.
 - [ ] Abort update with non-zero exit + actionable message if pre-pull fails.
-- [ ] DoD: `composer update <subtree-package>` pre-sync works as specified.
+- [ ] DoD: `composer update <path-subtree-package>` pre-sync works as specified.
 
 ## Track D - Safety and guardrails (after MVP speed)
 
@@ -117,7 +118,7 @@ Legend:
 
 ### Slice 19 - Validation semantics
 - [ ] Validate prefix exists.
-- [ ] Validate subtree package exists in `require` or `require-dev`.
+- [ ] Validate each subtree-enabled path prefix contains a valid `composer.json` with a package `name`.
 - [ ] Validate `git subtree` support availability.
 - [ ] Validate remote URL format and branch reachability.
 - [ ] DoD: semantic validation catches misconfiguration before sync.
@@ -166,12 +167,12 @@ Legend:
 
 ### Slice 26 - README installation and setup
 - [ ] Document install, `allow-plugins`, and path repository setup.
-- [ ] Provide full `extra.subtrees` configuration examples.
+- [ ] Provide full `repositories` `type=path` + `composer-subtree-plugin` configuration examples.
 - [ ] DoD: README supports copy-paste onboarding.
 
 ### Slice 27 - README command and update-hook examples
 - [ ] Add examples for add/status/pull/push/doctor.
-- [ ] Add `composer update <subtree-package>` behavior examples.
+- [ ] Add `composer update <path-subtree-package>` behavior examples.
 - [ ] DoD: command usage is easy to follow.
 
 ### Slice 28 - Troubleshooting and policy docs
@@ -182,7 +183,7 @@ Legend:
 
 ### Slice 29 - Acceptance and release gate
 - [ ] Verify all acceptance criteria A-F with tests and checklist.
-- [ ] Ensure unit coverage: config parsing, validation, package matching, option parsing.
+- [ ] Ensure unit coverage: config parsing, validation, package-to-path matching, option parsing.
 - [ ] Ensure integration coverage: real subtree pull/push flows in temp repos.
 - [ ] Tag and publish first stable release with changelog when criteria are met.
 - [ ] DoD: plan acceptance criteria are fully satisfied.

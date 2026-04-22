@@ -10,7 +10,9 @@ Implemented today:
 ## What this project is
 
 `composer-subtree-plugin` helps you manage subtree-based package workflows from Composer commands.
-It stores subtree definitions in `composer.json` (`extra.subtrees`) and uses those definitions for pull/push operations.
+It stores subtree metadata on `type=path` repository entries in
+`composer.json.repositories[].composer-subtree-plugin` and uses those
+definitions for pull/push operations.
 
 ## Why use this
 
@@ -54,27 +56,26 @@ If your Composer setup requires explicit plugin approval, add:
 
 ## Configuration format
 
-Subtrees are stored in `composer.json` under `extra.subtrees`:
+Subtrees are configured on `type=path` repository entries:
 
 ```json
 {
-  "extra": {
-    "subtrees": {
-      "composer/pcre": {
-        "package": "composer/pcre",
-        "prefix": "packages/pcre",
+  "repositories": [
+    {
+      "type": "path",
+      "url": "packages/pcre",
+      "composer-subtree-plugin": {
         "remote": "https://github.com/composer/pcre.git",
         "branch": "main",
         "squash": false
       }
     }
-  }
+  ]
 }
 ```
 
 Fields:
-- `package` (string): package name
-- `prefix` (string): local subtree directory
+- `url` (string): local subtree directory (path repository URL)
 - `remote` (string): upstream repository URL
 - `branch` (string): upstream branch
 - `squash` (bool, optional): whether pull/add uses `--squash` (defaults to `false`)
@@ -95,13 +96,12 @@ composer subtree:add https://github.com/composer/pcre.git main
 
 What it does:
 1. Runs `git subtree add --prefix=... <remote> <branch> [--squash]`
-2. Writes/updates the subtree entry in `composer.json` at `extra.subtrees`
-3. Ensures `composer.json.repositories` contains a path repository entry for the subtree prefix
+2. Ensures `composer.json.repositories` contains a path repository entry for the subtree prefix
+3. Writes/updates subtree metadata at `repositories[].composer-subtree-plugin`
 
 Notes:
 - If `prefix` is omitted, default is `packages/<repo-name>`.
-- Subtree key/package is derived from the URL path (for example `composer/pcre`).
-- Keys containing dots (`.`) are rejected.
+- Target selection is path-based (for example `packages/pcre`) or `all`.
 - If the git command fails, config is not persisted.
 
 ### 2) Pull subtree updates
@@ -110,13 +110,13 @@ Notes:
 composer subtree:pull [target]
 ```
 
-- `target` can be a subtree key (for example `composer/pcre`) or `all`.
+- `target` can be a subtree path target (for example `packages/pcre`) or `all`.
 - If omitted, it behaves like `all`.
 
 Examples:
 
 ```bash
-composer subtree:pull composer/pcre
+composer subtree:pull packages/pcre
 composer subtree:pull all
 composer subtree:pull
 ```
@@ -131,13 +131,13 @@ What it does per subtree:
 composer subtree:push [target]
 ```
 
-- `target` can be a subtree key or `all`.
+- `target` can be a subtree path target or `all`.
 - If omitted, it behaves like `all`.
 
 Examples:
 
 ```bash
-composer subtree:push composer/pcre
+composer subtree:push packages/pcre
 composer subtree:push all
 composer subtree:push
 ```
