@@ -1,3 +1,5 @@
+**⚠️ 🤖 💩 Made with lots of AI help, so use at your own risk**
+
 # composer-subtree-plugin
 
 A Composer plugin that adds practical Git subtree commands to your PHP project.
