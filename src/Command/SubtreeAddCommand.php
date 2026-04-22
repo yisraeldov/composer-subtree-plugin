@@ -36,6 +36,15 @@ final class SubtreeAddCommand extends BaseCommand
     {
         $this
             ->setDescription('Add a new subtree')
+            ->setHelp(
+                implode("\n", [
+                    'Add a subtree and persist repository metadata in composer.json.',
+                    '',
+                    'Examples:',
+                    '  composer subtree:add https://github.com/composer/pcre.git main',
+                    '  composer subtree:add https://github.com/composer/pcre.git main packages/pcre --squash',
+                ]),
+            )
             ->addArgument(
                 'upstream-url',
                 InputArgument::REQUIRED,

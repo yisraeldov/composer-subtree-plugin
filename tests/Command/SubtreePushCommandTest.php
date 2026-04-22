@@ -36,4 +36,17 @@ final class SubtreePushCommandTest extends TestCase
             $definition->getArgument('target')->getDescription(),
         );
     }
+
+    public function testItProvidesActionableHelpExamples(): void
+    {
+        $command = new SubtreePushCommand(
+            $this->createMock(Composer::class),
+            $this->createMock(GitProcessRunner::class),
+        );
+
+        self::assertStringContainsString(
+            'composer subtree:push',
+            $command->getHelp(),
+        );
+    }
 }

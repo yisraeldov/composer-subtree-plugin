@@ -33,6 +33,16 @@ final class SubtreePullCommand extends BaseCommand
     {
         $this
             ->setDescription('Pull updates for a configured subtree')
+            ->setHelp(
+                implode("\n", [
+                    'Pull updates for one configured subtree or all configured subtrees.',
+                    '',
+                    'Examples:',
+                    '  composer subtree:pull',
+                    '  composer subtree:pull all',
+                    '  composer subtree:pull packages/pcre',
+                ]),
+            )
             ->addArgument(
                 'target',
                 InputArgument::OPTIONAL,

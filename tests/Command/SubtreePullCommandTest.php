@@ -36,4 +36,17 @@ final class SubtreePullCommandTest extends TestCase
             $definition->getArgument('target')->getDescription(),
         );
     }
+
+    public function testItProvidesActionableHelpExamples(): void
+    {
+        $command = new SubtreePullCommand(
+            $this->createMock(Composer::class),
+            $this->createMock(GitProcessRunner::class),
+        );
+
+        self::assertStringContainsString(
+            'composer subtree:pull',
+            $command->getHelp(),
+        );
+    }
 }

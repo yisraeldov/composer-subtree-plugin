@@ -33,6 +33,16 @@ final class SubtreePushCommand extends BaseCommand
     {
         $this
             ->setDescription('Push updates for a configured subtree')
+            ->setHelp(
+                implode("\n", [
+                    'Push updates for one configured subtree or all configured subtrees.',
+                    '',
+                    'Examples:',
+                    '  composer subtree:push',
+                    '  composer subtree:push all',
+                    '  composer subtree:push packages/pcre',
+                ]),
+            )
             ->addArgument(
                 'target',
                 InputArgument::OPTIONAL,

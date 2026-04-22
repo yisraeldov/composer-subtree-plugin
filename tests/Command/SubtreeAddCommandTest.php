@@ -68,4 +68,14 @@ final class SubtreeAddCommandTest extends TestCase
         self::assertTrue($definition->hasOption('squash'));
     }
 
+    public function testItProvidesActionableHelpExamples(): void
+    {
+        $command = new SubtreeAddCommand($this->composer, $this->gitRunner);
+
+        self::assertStringContainsString(
+            'composer subtree:add',
+            $command->getHelp(),
+        );
+    }
+
 }
