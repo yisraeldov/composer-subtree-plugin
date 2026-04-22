@@ -13,28 +13,6 @@ final class RepositoriesConfigUpdater
      *
      * @return array<mixed>
      */
-    public function ensurePathRepository(
-        mixed $repositories,
-        string $prefix,
-    ): array {
-        if (!is_array($repositories)) {
-            return [['type' => 'path', 'url' => $prefix]];
-        }
-
-        if ($this->hasPathRepositoryForPrefix($repositories, $prefix)) {
-            return $repositories;
-        }
-
-        $repositories[] = ['type' => 'path', 'url' => $prefix];
-
-        return $repositories;
-    }
-
-    /**
-     * @param mixed $repositories
-     *
-     * @return array<mixed>
-     */
     public function upsertSubtreeMetadata(
         mixed $repositories,
         string $prefix,
@@ -159,11 +137,12 @@ final class RepositoriesConfigUpdater
         string $prefix,
         array $metadata,
     ): mixed {
-        if (!$this->isMatchingPathRepository($repository, $prefix)) {
+        if (
+            !is_array($repository)
+            || !$this->isMatchingPathRepository($repository, $prefix)
+        ) {
             return $repository;
         }
-
-        $repository = $this->normalizeRepository($repository);
 
         $repository[self::SUBTREE_METADATA_KEY] = $metadata;
 
@@ -182,11 +161,4 @@ final class RepositoriesConfigUpdater
             && ($repository['url'] ?? null) === $prefix;
     }
 
-    /**
-     * @return array<mixed>
-     */
-    private function normalizeRepository(mixed $repository): array
-    {
-        return is_array($repository) ? $repository : [];
-    }
 }

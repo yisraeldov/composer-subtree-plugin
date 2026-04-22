@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ComposerSubtreePlugin\Tests\Command;
 
 use Composer\Composer;
-use Composer\Package\RootPackageInterface;
 use ComposerSubtreePlugin\Command\SubtreeAddCommand;
 use ComposerSubtreePlugin\Git\GitProcessResult;
 use ComposerSubtreePlugin\Git\GitProcessRunner;
@@ -34,9 +33,6 @@ final class SubtreeAddCommandIntegrationTest extends TestCase
         );
 
         $composer = $this->createMock(Composer::class);
-        $package = $this->createMock(RootPackageInterface::class);
-        $package->method('getExtra')->willReturn(['subtrees' => []]);
-        $composer->method('getPackage')->willReturn($package);
 
         $gitRunner = $this->createMock(GitProcessRunner::class);
         $gitRunner->expects(self::once())->method('runOrFail')
