@@ -21,15 +21,14 @@ final class SubtreeAddInputParser
             $input,
             'upstream-branch',
         );
-        $packageName = $this->extractPackageName($upstreamUrl);
+        $prefix = $this->normalizePrefix(
+            $input->getArgument('prefix'),
+            $upstreamUrl,
+        );
 
         return new SubtreeConfig(
-            name: $packageName,
-            package: $packageName,
-            prefix: $this->normalizePrefix(
-                $input->getArgument('prefix'),
-                $upstreamUrl,
-            ),
+            name: $prefix,
+            prefix: $prefix,
             remote: $upstreamUrl,
             branch: $upstreamBranch,
             squash: (bool) $input->getOption('squash'),

@@ -106,7 +106,7 @@ Primary expected edits:
 - `tests/Command/SubtreeAddCommandExecuteTest.php`
 - `tests/E2E/SubtreeWorkflowE2ETest.php`
 
-### Phase 4 - Cleanup and consistency [pending]
+### Phase 4 - Cleanup and consistency [done]
 
 1. Remove obsolete assumptions and dead code tied to `extra.subtrees`.
 2. Update command help text to reflect repository metadata source.

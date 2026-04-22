@@ -16,7 +16,6 @@ final class SubtreeTargetConfigProviderTest extends TestCase
         $package = $this->createMock(RootPackageInterface::class);
         $expectedConfig = new SubtreeConfig(
             name: 'packages/pcre',
-            package: 'packages/pcre',
             prefix: 'packages/pcre',
             remote: 'https://github.com/composer/pcre.git',
             branch: 'main',
@@ -46,14 +45,12 @@ final class SubtreeTargetConfigProviderTest extends TestCase
         $package = $this->createMock(RootPackageInterface::class);
         $alphaConfig = new SubtreeConfig(
             name: 'packages/alpha',
-            package: 'packages/alpha',
             prefix: 'packages/alpha',
             remote: 'https://example.com/alpha.git',
             branch: 'main',
         );
         $zetaConfig = new SubtreeConfig(
             name: 'packages/zeta',
-            package: 'packages/zeta',
             prefix: 'packages/zeta',
             remote: 'https://example.com/zeta.git',
             branch: 'main',

@@ -8,7 +8,6 @@ final readonly class SubtreeConfig
 {
     public function __construct(
         private string $name,
-        private string $package,
         private string $prefix,
         private string $remote,
         private string $branch,
@@ -18,11 +17,6 @@ final readonly class SubtreeConfig
     public function name(): string
     {
         return $this->name;
-    }
-
-    public function package(): string
-    {
-        return $this->package;
     }
 
     public function prefix(): string

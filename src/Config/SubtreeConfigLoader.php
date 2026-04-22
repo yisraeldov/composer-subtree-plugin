@@ -46,7 +46,6 @@ final class SubtreeConfigLoader
 
         return new SubtreeConfig(
             name: $prefix,
-            package: $prefix,
             prefix: $prefix,
             remote: $upstream['remote'],
             branch: $upstream['branch'],
