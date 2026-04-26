@@ -76,11 +76,11 @@ Legend:
 - [x] DoD: hook is active and isolated to update flow.
 
 ### Slice 12 - Package targeting in update hook
-- [ ] Parse requested package args for `composer update <packages...>`.
-- [ ] Resolve requested package install paths.
-- [ ] Match package paths against `repositories` entries of `type=path` that include `composer-subtree-plugin` metadata.
-- [ ] Do nothing for bare `composer update` (no package args).
-- [ ] DoD: hook decides exactly when pre-pull should run.
+- [x] Parse requested package args for `composer update <packages...>`.
+- [x] Resolve requested package install paths.
+- [x] Match package paths against `repositories` entries of `type=path` that include `composer-subtree-plugin` metadata.
+- [x] Do nothing for bare `composer update` (no package args).
+- [x] DoD: hook decides exactly when pre-pull should run.
 
 ### Slice 13 - Pre-pull execution before solver
 - [ ] On matching path-subtree package(s), run subtree pull before normal update continues.
