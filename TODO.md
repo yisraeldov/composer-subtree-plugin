@@ -71,9 +71,9 @@ Legend:
 ## Track C - Update hook behavior
 
 ### Slice 11 - Event subscriber wiring
-- [ ] Implement `UpdateHookSubscriber` for `pre-command-run`.
-- [ ] Detect `composer update` command only.
-- [ ] DoD: hook is active and isolated to update flow.
+- [x] Implement `UpdateHookSubscriber` for `pre-command-run`.
+- [x] Detect `composer update` command only.
+- [x] DoD: hook is active and isolated to update flow.
 
 ### Slice 12 - Package targeting in update hook
 - [ ] Parse requested package args for `composer update <packages...>`.
