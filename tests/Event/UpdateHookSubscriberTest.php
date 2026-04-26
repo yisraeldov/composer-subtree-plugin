@@ -89,8 +89,7 @@ final class UpdateHookSubscriberTest extends TestCase
     private function createPreCommandRunEvent(
         string $command,
         array $packages = [],
-    ): PreCommandRunEvent
-    {
+    ): PreCommandRunEvent {
         $input = $this->createMock(InputInterface::class);
         $input->method('getArgument')
             ->willReturnCallback(

@@ -54,8 +54,8 @@ final class UpdateHookSubscriber
 
         return array_reduce(
             $this->configLoader()->load($package),
-            fn(array $targeted, SubtreeConfig $config): array =>
-                $this->appendWhenRequested($targeted, $config, $requestedPackageLookup),
+            fn(array $targeted, SubtreeConfig $config): array
+                => $this->appendWhenRequested($targeted, $config, $requestedPackageLookup),
             [],
         );
     }
