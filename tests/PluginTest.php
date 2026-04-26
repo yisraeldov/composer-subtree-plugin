@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ComposerSubtreePlugin\Tests;
 
+use Composer\Plugin\PluginEvents;
 use Composer\Plugin\Capability\CommandProvider as CommandProviderCapability;
 use ComposerSubtreePlugin\Command\SubtreeCommandProvider;
 use ComposerSubtreePlugin\Plugin;
@@ -18,6 +19,14 @@ final class PluginTest extends TestCase
         self::assertSame(
             [CommandProviderCapability::class => SubtreeCommandProvider::class],
             $plugin->getCapabilities(),
+        );
+    }
+
+    public function testItSubscribesToPreCommandRunEvent(): void
+    {
+        self::assertSame(
+            [PluginEvents::PRE_COMMAND_RUN => 'onPreCommandRun'],
+            Plugin::getSubscribedEvents(),
         );
     }
 }
