@@ -12,6 +12,7 @@ use ComposerSubtreePlugin\Config\SubtreeConfigLoader;
 final class UpdateHookSubscriber
 {
     private const UPDATE_COMMAND = 'update';
+    private const PACKAGES_ARGUMENT = 'packages';
 
     public function __construct(
         private readonly ?SubtreeConfigLoader $configLoader = null,
@@ -47,7 +48,9 @@ final class UpdateHookSubscriber
             return [];
         }
 
-        $requestedPackageLookup = array_fill_keys($requestedPackages, true);
+        $requestedPackageLookup = $this->requestedPackageLookup(
+            $requestedPackages,
+        );
 
         return array_reduce(
             $this->configLoader()->load($package),
@@ -62,7 +65,7 @@ final class UpdateHookSubscriber
      */
     private function requestedPackages(PreCommandRunEvent $event): array
     {
-        $packages = $event->getInput()->getArgument('packages');
+        $packages = $event->getInput()->getArgument(self::PACKAGES_ARGUMENT);
 
         if (!is_array($packages)) {
             return [];
@@ -71,6 +74,16 @@ final class UpdateHookSubscriber
         return array_values(
             array_filter($packages, static fn(mixed $package): bool => is_string($package) && $package !== ''),
         );
+    }
+
+    /**
+     * @param array<int, string> $requestedPackages
+     *
+     * @return array<string, bool>
+     */
+    private function requestedPackageLookup(array $requestedPackages): array
+    {
+        return array_fill_keys($requestedPackages, true);
     }
 
     /**
