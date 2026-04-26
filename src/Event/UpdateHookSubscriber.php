@@ -8,6 +8,8 @@ use Composer\Plugin\PreCommandRunEvent;
 
 final class UpdateHookSubscriber
 {
+    private const UPDATE_COMMAND = 'update';
+
     public function onPreCommandRun(PreCommandRunEvent $event): void
     {
         if (!$this->shouldRunFor($event)) {
@@ -17,6 +19,6 @@ final class UpdateHookSubscriber
 
     public function shouldRunFor(PreCommandRunEvent $event): bool
     {
-        return $event->getCommand() === 'update';
+        return $event->getCommand() === self::UPDATE_COMMAND;
     }
 }
